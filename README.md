@@ -16,7 +16,7 @@ Using SDP
 =========
 Adding an SDP layer to your code is straightforward:
 
-```
+```python
 import tensorflow as tf
 from keras import backend as K
 from keras.regularizers import l2
@@ -28,7 +28,7 @@ num_classes = (32, 45) # Discrete output space with shape 32 x 45
 
 # Create your awesome deep model with lots of layers and whatnot
 # ...
-final_hidden_layer = Dense(final_hidden_size, W_regularizer=l2(0.01), activation=K.relu)(drop_h2)
+final_hidden_layer = Dense(final_hidden_size, W_regularizer=l2(0.01), activation=K.relu)(...)
 final_hidden_drop = Dropout(0.5)(final_hidden_layer)
 model = LocallySmoothedMultiscaleLayer(final_hidden_drop, final_hidden_size, num_classes, one_hot=False)
 
