@@ -58,3 +58,15 @@ See `experiments/uci/model.py` and `experiments/uci/main.py` for complete exampl
 Citation
 ========
 If you use this code in your work, please cite the following:
+
+```
+@article{tansey:etal:2017:sdp,
+  title={Deep Nonparametric Estimation of Discrete Conditional Distributions via
+  Smoothed Dyadic Partitioning},
+  author={Tansey, Wesley and Pichotta, Karl and Scott, James G.},
+  journal={arXiv preprint arXiv:1702.07398},
+  year={2017}
+}
+```
+
+The paper is [available here](http://arxiv.org/abs/1702.07398).
