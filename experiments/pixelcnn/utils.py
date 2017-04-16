@@ -34,7 +34,7 @@ class Dataset(object):
                 features, labels = self._load(0)
                 self._examples_per_file = np.prod(features.shape[:-1])
                 self._nfeatures = features.shape[-1]
-                self._nlabels = labels.shape[-1]
+                self._nlabels = tuple([256] * labels.shape[-1])
             self._nexamples += self._examples_per_file
             self._nfiles += 1
         self._perm = np.arange(self._nfiles)
