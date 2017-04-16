@@ -48,6 +48,7 @@ def main():
     # Get the arguments from the command line
     args = parser.parse_args()
     dargs = vars(args)
+    dargs['model'] = 'sdp'
 
     # Get the parameters
     if not os.path.exists(dargs['outputdir']):
