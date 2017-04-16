@@ -91,7 +91,7 @@ def create_model(model, dataset, dense=None, inputdir='experiments/uci/data', va
                 input_layer = Dropout(0.5)(input_layer)
                 input_layer_size = d
 
-        print(num_classes)
+        print 'num classes: ', dataset.nlabels
         if model == 'multinomial':
             dist_model = MultinomialLayer(input_layer, input_layer_size, dataset.nlabels, **kwargs)
         elif model == 'gmm':
