@@ -34,7 +34,7 @@ class Dataset(object):
                 features, labels = self._load(0)
                 self._examples_per_file = np.prod(features.shape[:-1])
                 self._nfeatures = features.shape[-1]
-                self._nlabels = tuple([256] * labels.shape[-1])
+                self._nlabels = tuple([16] * labels.shape[-1]) # TEMP
             self._nexamples += self._examples_per_file
             self._nfiles += 1
         self._perm = np.arange(self._nfiles)
@@ -43,7 +43,7 @@ class Dataset(object):
         prefix = 'test' if self._test else 'train'
         features = np.load(os.path.join(self._path, '{}_features_{}.npy'.format(prefix, self._nfiles)))
         labels = np.load(os.path.join(self._path, '{}_pixels_{}.npy'.format(prefix, self._nfiles)))
-        return features, labels
+        return features, labels / 16 # TEMP
 
     @property
     def nfeatures(self):
