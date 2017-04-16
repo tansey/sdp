@@ -88,9 +88,18 @@ class Dataset(object):
 
 
 def load_dataset(inputdir='experiments/pixelcnn/data/',
-                 validation_pct=0.2, **kwargs):
+                 validation_pct=0.2, seed=49, **kwargs):
     all_train = Dataset(inputdir)
-    print all_train.nfiles, all_train.nfeatures, all_train.nlabels, all_train.nexamples
+    rng = np.random.RandomState(seed)
+    indices = np.arange(all_train.nfiles)
+    rng.shuffle(indices)
+    train_start = int(np.round(len(all_train.nfiles) * validation_pct))
+    validation_indices, train_indices = indices[:train_start], indices[train_start:]
+    train = Dataset(inputdir, file_indices=train_indices)
+    validation = Dataset(inputdir, file_indices=validation_indices)
+    test = Dataset(inputdir, test_set=True)
+    print 'test files: ', test.nfiles
+    return Datasets(train=train, validation=validation, test=test, nfeatures=train.nfeatures, nlabels=train.nlabels)
 
 
 
