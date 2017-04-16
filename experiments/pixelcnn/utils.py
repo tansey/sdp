@@ -43,7 +43,7 @@ class Dataset(object):
         prefix = 'test' if self._test else 'train'
         features = np.load(os.path.join(self._path, '{}_features_{}.npy'.format(prefix, self._nfiles)))
         labels = np.load(os.path.join(self._path, '{}_pixels_{}.npy'.format(prefix, self._nfiles)))
-        return features.reshape((-1,3)), (labels / 16).reshape((-1,3)) # TEMP
+        return features.reshape((-1,self.nfeatures)), (labels / 16).reshape((-1,3)) # TEMP
 
     @property
     def nfeatures(self):
