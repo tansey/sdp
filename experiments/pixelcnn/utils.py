@@ -78,7 +78,9 @@ class Dataset(object):
             self.reset() # reset for next time we get called
             raise StopIteration
 
-        return self._load(self._perm[p])
+        features, labels = self._load(self._perm[self.p])
+        self.p += 1
+        return features, labels
 
     def __iter__(self):
         return self
