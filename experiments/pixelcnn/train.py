@@ -49,17 +49,17 @@ def main():
     args = parser.parse_args()
     dargs = vars(args)
     dargs['model'] = 'sdp'
-    dargs['dataset'] = 'cifar10'
     dargs['train_id'] = 0
 
     # Get the parameters
     if not os.path.exists(dargs['outputdir']):
         os.makedirs(dargs['outputdir'])
     
-    dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{k}_{lam}_{train_id}'.format(**dargs))
-    dargs['variable_scope'] = '{model}-{dataset}-{k}-{lam}-{train_id}'.format(**dargs)
+    dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{k}_{lam}_{train_id}'.format(**dargs))
+    dargs['variable_scope'] = '{model}-{k}-{lam}-{train_id}'.format(**dargs)
     
     dataset = load_dataset(**dargs)
+    dargs['dataset'] = dataset
 
     sess = tf.Session()
 

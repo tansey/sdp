@@ -98,7 +98,6 @@ def load_dataset(inputdir='experiments/pixelcnn/data/',
     train = Dataset(inputdir, file_indices=train_indices)
     validation = Dataset(inputdir, file_indices=validation_indices)
     test = Dataset(inputdir, test_set=True)
-    print 'test files: ', test.nfiles
     return Datasets(train=train, validation=validation, test=test, nfeatures=train.nfeatures, nlabels=train.nlabels)
 
 
