@@ -87,9 +87,9 @@ def main():
                 feed_dict = model.train_dict(X[i:i+args.batchsize], y[i:i+args.batchsize])
                 # feed_dict[learning_rate] = cur_learning_rate
                 sess.run(train_step, feed_dict=feed_dict)
-                if step % 1 == 0:
-                    print('\tEpoch {0}, step {1}'.format(epoch, step))
-                    sys.stdout.flush()
+            if step % 1 == 0:
+                print('\tEpoch {0}, step {1}'.format(epoch, step))
+                sys.stdout.flush()
 
         # Test if the model improved on the validation set
         validation_loss = score_model(sess, model, dataset)
