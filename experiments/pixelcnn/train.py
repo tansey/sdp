@@ -39,6 +39,7 @@ def main():
     parser.add_argument('--validation_pct', type=float, default=0.2,
                                         help='The number of samples to hold out for a validation set. This is a percentage of the training samples.')
     parser.add_argument('--nepochs', type=int, default=1000, help='The maximum number of training epochs.')
+    parser.add_argument('--batchsize', type=int, default=10, help='The mini-batch size.')
     
     # SDP settings
     parser.add_argument('--lam', type=float, default=0.05, help='The lambda penalty value for the smoothed k-d tree.')
@@ -78,15 +79,17 @@ def main():
 
     best_loss = None
     epochs_since_improvement = 0
+
     for epoch in xrange(args.nepochs):
         # Do all the minibatch updates for this epoch
         for step, (X, y) in enumerate(dataset.train):
-            feed_dict = model.train_dict(X, y)
-            # feed_dict[learning_rate] = cur_learning_rate
-            sess.run(train_step, feed_dict=feed_dict)
-            if step % 100 == 0:
-                print('\tEpoch {0}, step {1}'.format(epoch, step))
-                sys.stdout.flush()
+            for i in xrange(int(np.ceil(len(X) / float(args.batchsize)))):
+                feed_dict = model.train_dict(X[i:i+args.batchsize], y[i:i+args.batchsize])
+                # feed_dict[learning_rate] = cur_learning_rate
+                sess.run(train_step, feed_dict=feed_dict)
+                if step % 1 == 0:
+                    print('\tEpoch {0}, step {1}'.format(epoch, step))
+                    sys.stdout.flush()
 
         # Test if the model improved on the validation set
         validation_loss = score_model(sess, model, dataset)
