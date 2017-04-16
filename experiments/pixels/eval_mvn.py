@@ -5,7 +5,7 @@ import sys
 import os
 import argparse
 import tensorflow as tf
-from tfcde.utils import tv_distance, ks_distance
+from tfsdp.utils import tv_distance, ks_distance
 from model import create_model, train_dict, test_dict
 from scipy.stats import multivariate_normal as mvn
 
@@ -88,7 +88,7 @@ def main():
     tf_X, dist = create_model(**dargs)
     saver = tf.train.Saver()
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     # Reset the model back to the best version
     saver.restore(sess, dargs['outfile'])

@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
-from tfcde.utils import weight_variable, bias_variable
-from tfcde.models import MultinomialLayer, DiscreteParametricMixtureLayer,\
+from tfsdp.utils import weight_variable, bias_variable
+from tfsdp.models import MultinomialLayer, DiscreteParametricMixtureLayer,\
                          MultiscaleLayer, TrendFilteringLayer,\
                          SmoothedMultiscaleLayer, DiscreteLogisticMixtureLayer, \
                          LocallySmoothedMultiscaleLayer

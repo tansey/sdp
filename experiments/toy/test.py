@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import seaborn as sns
 from pygfl.utils import hypercube_edges, matrix_from_edges, get_delta as sp_get_delta, pretty_str
-from tfcde.utils import batch_sparse_tensor_dense_matmul, \
+from tfsdp.utils import batch_sparse_tensor_dense_matmul, \
                         get_sparse_penalty_matrix, \
                         get_delta as tf_get_delta, \
                         batch_multiscale_label_lookup, \
@@ -32,7 +32,7 @@ class TrendFiltering:
             self.yhat = tf.nn.softmax(self.q, name='yhat')
             self.acc = tf.reduce_mean(-tf.reduce_sum(self.y * tf.log(tf.clip_by_value(self.yhat, 1e-10, 1.0)) 
                                                           + (1 - self.y) * tf.log(tf.clip_by_value(1 - self.yhat, 1e-10, 1.0)),
-                                        reduction_indices=[1]))
+                                        axis=[1]))
             self.reg = tf.reduce_sum(tf.abs(tf.sparse_tensor_dense_matmul(self.D, tf.expand_dims(self.q,-1))))
             self.loss = self.acc + self.lam * self.reg
 
@@ -56,10 +56,10 @@ class PatchSampledTrendFiltering:
             self.neighborhood_q = tf.gather(self.q, self.neighborhood_indexes) # Sampled logits
             self.negative_q = tf.gather(self.q, self.negative_indexes) # Sampled negative logits
             #self.sample_yhat = tf.nn.softmax(tf.reshape(self.sample_q, [-1]), name='sampled_yhat') # Sampled softmax
-            self.sample_yhat = tf.nn.softmax(tf.concat(1, [self.neighborhood_q, self.negative_q]), name='sampled_yhat')
+            self.sample_yhat = tf.nn.softmax(tf.concat(axis=1, values=[self.neighborhood_q, self.negative_q]), name='sampled_yhat')
             self.acc = tf.reduce_mean(-tf.reduce_sum(self.sample_y * tf.log(tf.clip_by_value(self.sample_yhat, 1e-10, 1.0)) 
                                                           + (1 - self.sample_y) * tf.log(tf.clip_by_value(1 - self.sample_yhat, 1e-10, 1.0)),
-                                        reduction_indices=[1]))
+                                        axis=[1]))
             # Smooth a local patch centered on the target variables
             self.reg = tf.reduce_sum(tf.abs(batch_sparse_tensor_dense_matmul(self.D, tf.expand_dims(self.neighborhood_q,-1)))) 
             self.loss = self.acc + self.lam * self.reg
@@ -104,11 +104,11 @@ class SampledMultiscale:
             self.splits = tf.placeholder(tf.float32, [None, self.path_length])
             self.q = tf.Variable([0.]*self.num_nodes)
             self.sampled_q = tf.gather(self.q, self.q_indices)
-            self.sampled_probs = tf.inv(1 + tf.exp(-self.sampled_q))
+            self.sampled_probs = tf.reciprocal(1 + tf.exp(-self.sampled_q))
             self.log_left_probs = self.splits * tf.log(tf.clip_by_value(self.sampled_probs, 1e-10, 1.0))
             self.log_right_probs = (1 - self.splits) * tf.log(tf.clip_by_value(1 - self.sampled_probs, 1e-10, 1.0))
-            self.loss = tf.reduce_mean(-tf.reduce_sum(self.log_left_probs+self.log_right_probs, reduction_indices=[1]))
-            self.sampled_density = tf.reduce_prod(tf.select(self.splits > 0, self.sampled_probs, 1 - self.sampled_probs), reduction_indices=[1])
+            self.loss = tf.reduce_mean(-tf.reduce_sum(self.log_left_probs+self.log_right_probs, axis=[1]))
+            self.sampled_density = tf.reduce_prod(tf.where(self.splits > 0, self.sampled_probs, 1 - self.sampled_probs), axis=[1])
 
     def fill_train_dict(self, feed_dict, batch_positives):
         indices, splits = batch_multiscale_label_lookup(batch_positives[:,np.newaxis], self.bins)
@@ -146,22 +146,22 @@ class LocallySmoothedMultiscale:
             self.splits = tf.placeholder(tf.float32, [None, self.path_length])
             self.q = tf.Variable([0.]*self.num_nodes)
             self.sampled_q = tf.gather(self.q, self.q_indices)
-            self.sampled_probs = tf.inv(1 + tf.exp(-self.sampled_q))
+            self.sampled_probs = tf.reciprocal(1 + tf.exp(-self.sampled_q))
             self.log_left_probs = self.splits * tf.log(tf.clip_by_value(self.sampled_probs, 1e-10, 1.0))
             self.log_right_probs = (1 - self.splits) * tf.log(tf.clip_by_value(1 - self.sampled_probs, 1e-10, 1.0))
-            self.log_probs = tf.reduce_mean(-tf.reduce_sum(self.log_left_probs+self.log_right_probs, reduction_indices=[1]))
+            self.log_probs = tf.reduce_mean(-tf.reduce_sum(self.log_left_probs+self.log_right_probs, axis=[1]))
             # Smooth a local patch centered on the target variables
             self.neighborhood_indexes = tf.placeholder(tf.int32, [None, self.neighborhood_size, self.path_length])
             self.neighborhood_splits = tf.placeholder(tf.float32, [None, self.neighborhood_size, self.path_length])
             self.neighborhood_q = tf.gather(self.q, self.neighborhood_indexes)
-            self.neighborhood_probs = tf.inv(1 + tf.exp(-self.neighborhood_q))
+            self.neighborhood_probs = tf.reciprocal(1 + tf.exp(-self.neighborhood_q))
             self.neighborhood_log_left = self.neighborhood_splits * tf.log(tf.clip_by_value(self.neighborhood_probs, 1e-10, 1.0))
             self.neighborhood_log_right = (1 - self.neighborhood_splits) * tf.log(tf.clip_by_value(1 - self.neighborhood_probs, 1e-10, 1.0))
-            self.neighborhood_log_probs = tf.reduce_sum(self.neighborhood_log_left+self.neighborhood_log_right, reduction_indices=[2])
+            self.neighborhood_log_probs = tf.reduce_sum(self.neighborhood_log_left+self.neighborhood_log_right, axis=[2])
             self.reg = tf.reduce_sum(tf.abs(batch_sparse_tensor_dense_matmul(self.D, tf.expand_dims(self.neighborhood_log_probs, -1))))
             # Add the loss and regularization penalty together
             self.loss = self.log_probs + self.lam * self.reg
-            self.sampled_density = tf.reduce_prod(tf.select(self.splits > 0, self.sampled_probs, 1 - self.sampled_probs), reduction_indices=[1])
+            self.sampled_density = tf.reduce_prod(tf.where(self.splits > 0, self.sampled_probs, 1 - self.sampled_probs), axis=[1])
 
     def fill_train_dict(self, feed_dict, batch_positives):
         indices, splits = batch_multiscale_label_lookup(batch_positives[:,np.newaxis], self.bins)
@@ -241,7 +241,7 @@ if __name__ == '__main__':
     train_multi = opt.minimize(multi.loss)
     train_sdp = [opt.minimize(s.loss) for s in sdp]
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     full_results, sampled_results, multi_results, sdp_results = [], [], [], []
     indices = np.arange(len(data))

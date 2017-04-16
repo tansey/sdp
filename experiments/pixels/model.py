@@ -5,8 +5,8 @@ from keras.regularizers import l2
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
-from tfcde.utils import ints_to_multinomials
-from tfcde.models import MultinomialLayer, DiscreteParametricMixtureLayer, \
+from tfsdp.utils import ints_to_multinomials
+from tfsdp.models import MultinomialLayer, DiscreteParametricMixtureLayer, \
                          MultiscaleLayer, TrendFilteringLayer, \
                          SmoothedMultiscaleLayer, LocallySmoothedMultiscaleLayer, \
                          DiscreteLogisticMixtureLayer

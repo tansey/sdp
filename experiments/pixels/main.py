@@ -5,7 +5,7 @@ import sys
 import os
 import argparse
 import tensorflow as tf
-from tfcde.utils import tv_distance, ks_distance
+from tfsdp.utils import tv_distance, ks_distance
 from model import create_model, train_dict, test_dict
 
 def score_model(sess, model, dist, data, tf_X):
@@ -40,7 +40,7 @@ def main():
     # Experiment settings
     parser.add_argument('model', choices=['multinomial', 'gmm', 'lmm', 'sdp'], help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed k-d trees.')
     parser.add_argument('--inputdir', default='experiments/pixels/data', help='The directory where the input data files will be stored.')
-    parser.add_argument('--outputdir', default='experiments/pixels/results', help='The directory where the input data files will be stored.')
+    parser.add_argument('--outputdir', default='experiments/pixels/results', help='The directory where the output data files will be stored.')
     parser.add_argument('--dataset', choices=['mnist', 'cifar'], default='cifar', help='The dataset to use. MNIST uses grayscale pixels; CIFAR uses RGB pixels')
     parser.add_argument('--variable_scope', default='pixels-', help='The variable scope that the model will be created with.')
     parser.add_argument('--train_id', type=int, default=0, help='A trial ID. All models trained with the same trial ID will use the same train/validation datasets.')
@@ -115,7 +115,7 @@ def main():
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=args.epsilon)
     train_step = opt.minimize(dist.train_loss)
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     print('Beginning training and going for a maximum of {nepochs} epochs'.format(**dargs))
     sys.stdout.flush()

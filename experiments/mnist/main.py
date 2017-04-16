@@ -117,7 +117,7 @@ def main():
 
     train_step = opt.minimize(model.train_loss)
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     # clip_gradients = False
     cur_learning_rate = args.learning_rate

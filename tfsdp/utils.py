@@ -277,29 +277,29 @@ def trend_filtering_penalty(z, dims, k, penalty='lasso', sparse=True):
     if (not hasattr(dims, "__len__") or len(dims) == 1) and k < 3:
         print 'Using fast 1D trend filtering'
         if k == 0:
-            v = trend_filtering_penalty_fn(tf.sub(z[:,:-1], z[:,1:]), penalty)
-            fv = tf.reduce_mean(tf.reduce_sum(v, reduction_indices=[1]))
+            v = trend_filtering_penalty_fn(tf.subtract(z[:,:-1], z[:,1:]), penalty)
+            fv = tf.reduce_mean(tf.reduce_sum(v, axis=[1]))
         elif k == 1:
             v = 2*z
-            v_first = trend_filtering_penalty_fn(tf.sub(v[:,0], tf.add(z[:,1],z[:,0])), penalty)
-            v_mid = trend_filtering_penalty_fn(tf.sub(v[:,1:-1], tf.add(z[:,:-2], z[:,2:])), penalty)
-            v_last = trend_filtering_penalty_fn(tf.sub(v[:,-1], tf.add(z[:,-1],z[:,-2])), penalty)
+            v_first = trend_filtering_penalty_fn(tf.subtract(v[:,0], tf.add(z[:,1],z[:,0])), penalty)
+            v_mid = trend_filtering_penalty_fn(tf.subtract(v[:,1:-1], tf.add(z[:,:-2], z[:,2:])), penalty)
+            v_last = trend_filtering_penalty_fn(tf.subtract(v[:,-1], tf.add(z[:,-1],z[:,-2])), penalty)
             fv = tf.reduce_mean(tf.add_n([v_first,
-                                         tf.reduce_sum(v_mid, reduction_indices=[1]),
+                                         tf.reduce_sum(v_mid, axis=[1]),
                                          v_last]))
         elif k == 2:
-            v = 3*tf.sub(z[:,:-1], z[:,1:])
-            v_first = trend_filtering_penalty_fn(tf.add(tf.sub(v[:,0], z[:,0]), z[:,2]), penalty)
-            v_mid = trend_filtering_penalty_fn(tf.add(v[:,1:-1], tf.sub(z[:,3:], z[:,:-3])), penalty)
-            v_last = trend_filtering_penalty_fn(tf.sub(tf.add(v[:,-1], z[:,-1]), z[:,-3]), penalty)
+            v = 3*tf.subtract(z[:,:-1], z[:,1:])
+            v_first = trend_filtering_penalty_fn(tf.add(tf.subtract(v[:,0], z[:,0]), z[:,2]), penalty)
+            v_mid = trend_filtering_penalty_fn(tf.add(v[:,1:-1], tf.subtract(z[:,3:], z[:,:-3])), penalty)
+            v_last = trend_filtering_penalty_fn(tf.subtract(tf.add(v[:,-1], z[:,-1]), z[:,-3]), penalty)
             fv = tf.reduce_mean(tf.add_n([v_first,
-                                         tf.reduce_sum(v_mid, reduction_indices=[1]),
+                                         tf.reduce_sum(v_mid, axis=[1]),
                                          v_last]))
     elif not sparse:
         print 'Using dense n-dimensional trend filtering'
         D = get_delta(get_sparse_penalty_matrix(dims), k, sparse=False)
         v = trend_filtering_penalty_fn(tf.map_fn(lambda z_i: tf.matmul(D,z_i), tf.expand_dims(z,-1)), penalty)
-        fv = tf.reduce_mean(tf.reduce_sum(v, reduction_indices=[1,2]))
+        fv = tf.reduce_mean(tf.reduce_sum(v, axis=[1,2]))
     else:
         print 'Using slow-but-sparse n-dimensional trend filtering'
         # NOTE: If you need this, you are slowing down your network substantially by
@@ -310,7 +310,7 @@ def trend_filtering_penalty(z, dims, k, penalty='lasso', sparse=True):
         
         # Calculate the trendfiltering penalty for each example and average
         v = trend_filtering_penalty_fn(batch_sparse_tensor_dense_matmul(D, tf.expand_dims(z,-1)), penalty)
-        fv = tf.reduce_mean(tf.reduce_sum(v, reduction_indices=[1,2]))
+        fv = tf.reduce_mean(tf.reduce_sum(v, axis=[1,2]))
     return fv
 
 def batch_trend_filtering_penalty(z, dims, k, penalty='lasso', sparse=True):
@@ -409,16 +409,16 @@ def rmse(labels, densities):
 ####### Gaussian Mixture Model (Mixture Density Networks) Utils #######
 
 def univariate_gaussian_likelihood(x, mu, sigma):
-    result = tf.sub(x, mu)
-    result = tf.mul(result,tf.inv(sigma))
+    result = tf.subtract(x, mu)
+    result = tf.multiply(result,tf.reciprocal(sigma))
     result = -tf.square(result)/2.
-    return tf.mul(tf.exp(result),tf.inv(sigma))/np.sqrt(2*np.pi)
+    return tf.multiply(tf.exp(result),tf.reciprocal(sigma))/np.sqrt(2*np.pi)
 
 def univariate_gmm_likelihood(x, w, mu, sigma):
-    xw_shape = tf.pack([tf.shape(w)[-1], tf.shape(x)[0]])
-    x_tiles = tf.transpose(tf.reshape(tf.tile(tf.squeeze(x,[-1]), tf.pack([tf.shape(w)[-1]])), xw_shape))
+    xw_shape = tf.stack([tf.shape(w)[-1], tf.shape(x)[0]])
+    x_tiles = tf.transpose(tf.reshape(tf.tile(tf.squeeze(x,[-1]), tf.stack([tf.shape(w)[-1]])), xw_shape))
     result = univariate_gaussian_likelihood(tf.cast(x_tiles, tf.float32), mu, sigma)
-    result = tf.mul(result, w)
+    result = tf.multiply(result, w)
     result = tf.reduce_sum(result, 1)
     return tf.expand_dims(result, -1)
 
@@ -445,8 +445,8 @@ def unpack_cholesky(q, ndims, num_components=1):
         pieces.append(chol_diag[:,:,i:i+1])
         if i < (ndims-1):
             pieces.append(tf.zeros([tf.shape(chol_diag)[0], num_components, ndims-i-1]))
-        chol_rows.append(tf.concat(2, pieces))
-    return tf.reshape(tf.concat(2, chol_rows), [tf.shape(chol_diag)[0], num_components, ndims, ndims])
+        chol_rows.append(tf.concat(axis=2, values=pieces))
+    return tf.reshape(tf.concat(axis=2, values=chol_rows), [tf.shape(chol_diag)[0], num_components, ndims, ndims])
 
 def unpack_mvn_params(q, ndims, num_components=3):
     '''Returns the parameters of the MVN output.
@@ -466,10 +466,10 @@ def mvn_mix_log_probs(samples, q, ndims, num_components=3):
     chol = unpack_cholesky(chol_q, ndims, num_components)
     log_probs = []
     for c in xrange(num_components):
-        packed_params = tf.concat(1, [mu[:,c,:],tf.reshape(chol[:,c,:,:], [-1,ndims*ndims]), samples])
+        packed_params = tf.concat(axis=1, values=[mu[:,c,:],tf.reshape(chol[:,c,:,:], [-1,ndims*ndims]), samples])
         log_p = tf.map_fn(lambda x: chol_mvn(x[:ndims], tf.reshape(x[ndims:ndims*(1+ndims)],[ndims,ndims])).log_prob(x[ndims*(1+ndims):]), packed_params)
         log_probs.append(log_p)
-    log_probs = tf.transpose(tf.reshape(tf.concat(0, log_probs), [num_components, -1]))
+    log_probs = tf.transpose(tf.reshape(tf.concat(axis=0, values=log_probs), [num_components, -1]))
     log_probs = tf.log(pi)+log_probs
     return log_sum_exp(log_probs)
 
@@ -504,7 +504,7 @@ def discretized_mix_logistic_log_probs_nd(x, l, nr_mix=3, ndims=1, num_classes=2
     ncoeffs = (ndims*ndims - ndims) / 2
     params_per_component = ncoeffs + ndims * 2 + 1
     logit_probs = l[:,:nr_mix]
-    tf.concat(0,[tf.shape(x)[:-1],[nr_mix,params_per_component-1]])
+    tf.concat(axis=0,values=[tf.shape(x)[:-1],[nr_mix,params_per_component-1]])
     l = tf.reshape(l[:,nr_mix:], [tf.shape(x)[0],nr_mix,params_per_component-1]) # reshape into (B, nr_mix, params_per_component-1)
     means = l[:,:,:ndims]
     log_scales = tf.maximum(l[:,:,ndims:2*ndims], -7.)
@@ -517,7 +517,7 @@ def discretized_mix_logistic_log_probs_nd(x, l, nr_mix=3, ndims=1, num_classes=2
         adjusted_means.append(means[:,:,i] + tf.reduce_sum(coeffs[:, :, coeffs_start:coeffs_end] * x[:, :, 0:i], [2]))
         coeffs_start = coeffs_end
         coeffs_end += i+1
-    means = tf.reshape(tf.concat(1,adjusted_means), [tf.shape(x)[0],nr_mix, ndims])
+    means = tf.reshape(tf.concat(axis=1,values=adjusted_means), [tf.shape(x)[0],nr_mix, ndims])
     centered_x = x - means
     inv_stdv = tf.exp(-log_scales)
     plus_in = inv_stdv * (centered_x + 1./(num_classes-1.))
@@ -539,7 +539,7 @@ def discretized_mix_logistic_log_probs_nd(x, l, nr_mix=3, ndims=1, num_classes=2
     # tensorflow backpropagates through tf.select() by multiplying with zero instead of selecting: this requires use to use some ugly tricks to avoid potential NaNs
     # the 1e-12 in tf.maximum(cdf_delta, 1e-12) is never actually used as output, it's purely there to get around the tf.select() gradient issue
     # if the probability on a sub-pixel is below 1e-5, we use an approximation based on the assumption that the log-density is constant in the bin of the observed sub-pixel value
-    log_probs = tf.select(x < -0.999, log_cdf_plus, tf.select(x > 0.999, log_one_minus_cdf_min, tf.select(cdf_delta > 1e-5, tf.log(tf.maximum(cdf_delta, 1e-12)), log_pdf_mid - np.log((num_classes-1)/2.))))
+    log_probs = tf.where(x < -0.999, log_cdf_plus, tf.where(x > 0.999, log_one_minus_cdf_min, tf.where(cdf_delta > 1e-5, tf.log(tf.maximum(cdf_delta, 1e-12)), log_pdf_mid - np.log((num_classes-1)/2.))))
 
     log_probs = tf.reduce_sum(log_probs,2) + log_prob_from_logits(logit_probs)
     return log_sum_exp(log_probs)

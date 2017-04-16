@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 import collections
-from tfcde.datasets import DataSet
+from tfsdp.datasets import DataSet
 
 ############### Preprocessing tools ################################
 def standardize(data, cols):

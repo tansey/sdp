@@ -5,7 +5,7 @@ import sys
 import os
 import argparse
 import tensorflow as tf
-from tfcde.utils import tv_distance, ks_distance
+from tfsdp.utils import tv_distance, ks_distance
 from utils import read_data_sets
 from model import create_model
 
@@ -140,7 +140,7 @@ def main():
 
     train_step = opt.minimize(model.train_loss)
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     cur_learning_rate = args.learning_rate
     best_model_loss = None

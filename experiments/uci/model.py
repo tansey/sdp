@@ -6,8 +6,8 @@ from keras import backend as K
 from keras.regularizers import l2
 from keras.layers import Dense, Dropout, Flatten
 from utils import dataset_details
-from tfcde.utils import ints_to_multinomials
-from tfcde.models import MultinomialLayer, \
+from tfsdp.utils import ints_to_multinomials
+from tfsdp.models import MultinomialLayer, \
                          DiscreteParametricMixtureLayer, \
                          LocallySmoothedMultiscaleLayer, \
                          DiscreteLogisticMixtureLayer

@@ -19,7 +19,7 @@ from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 from scipy import stats
 from utils import read_data_sets
-from tfcde.utils import tv_distance, ks_distance
+from tfsdp.utils import tv_distance, ks_distance
 
 IMAGE_ROWS = 28
 IMAGE_COLS = 28
@@ -144,7 +144,7 @@ def main():
     K.set_session(sess)  # Pass session info to Keras
     inference.initialize(optimizer=optimizer)
 
-    init = tf.initialize_all_variables()
+    init = tf.global_variables_initializer()
     init.run()
 
     saver = tf.train.Saver()

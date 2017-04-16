@@ -19,7 +19,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tf-sdp',
-    version='0.9',
+    version='1.0',
     description='Deep Nonparametric Estimation of Discrete Conditional Distributions via Smoothed Dyadic Partitioning',
     long_description=long_description,
     url='https://github.com/tansey/sdp',

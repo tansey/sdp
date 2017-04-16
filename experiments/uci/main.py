@@ -35,7 +35,7 @@ def main():
     parser.add_argument('model', choices=['multinomial', 'gmm', 'lmm', 'sdp'], help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed k-d trees.')
     parser.add_argument('dataset', choices=['auto_mpg', 'housing', 'energy_efficiency', 'parkinsons', 'concrete', 'abalone', 'student_performance'], help='The dataset to use. See the corresponding preprocessing files for details.')
     parser.add_argument('--inputdir', default='experiments/uci/data', help='The directory where the input data files will be stored.')
-    parser.add_argument('--outputdir', default='experiments/uci/results', help='The directory where the input data files will be stored.')
+    parser.add_argument('--outputdir', default='experiments/uci/results', help='The directory where the output data files will be stored.')
     parser.add_argument('--variable_scope', default='uci-', help='The variable scope that the model will be created with.')
     parser.add_argument('--train_id', type=int, default=0, help='A trial ID. All models trained with the same trial ID will use the same train/validation datasets.')
     parser.add_argument('--validation_pct', type=float, default=0.2,
@@ -63,6 +63,8 @@ def main():
     dargs = vars(args)
 
     # Get the parameters
+    if not os.path.exists(dargs['outputdir']):
+        os.makedirs(dargs['outputdir'])
     if args.model == 'sdp':
         dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{k}_{lam}_{train_id}'.format(**dargs))
         dargs['variable_scope'] = '{model}-{dataset}-{k}-{lam}-{train_id}'.format(**dargs)
@@ -88,7 +90,7 @@ def main():
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=args.epsilon)
     train_step = opt.minimize(model.train_loss)
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     print('Beginning training and going for a maximum of {nepochs} epochs'.format(**dargs))
     sys.stdout.flush()

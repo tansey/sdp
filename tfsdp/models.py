@@ -58,13 +58,18 @@ class MultinomialLayer(DiscreteDistributionLayer):
             W = weight_variable([input_layer_size, self._num_nodes])
             b = bias_variable([self._num_nodes])
 
-            self._q = tf.nn.softmax(tf.matmul(input_layer, W) + b)
-            self._loss_function = tf.reduce_mean(-tf.reduce_sum(self._labels * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0)) 
-                                                             + (1 - self._labels) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0)),
-                                        reduction_indices=[1]))
+            self._logits = tf.matmul(input_layer, W) + b
+            self._q = tf.nn.softmax(self._logits)
+            # self._loss_function = tf.reduce_mean(-tf.reduce_sum(self._labels * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0)) 
+            #                                                  + (1 - self._labels) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0)),
+            #                             axis=[1]))
+            self._loss_function = tf.reduce_mean(
+                                        tf.nn.softmax_cross_entropy_with_logits(
+                                            labels=self._labels,
+                                            logits=self._logits))
 
             # Reshape to the original dimensions of the density
-            density_shape = tf.pack([tf.shape(input_layer)[0]] + list(num_classes))
+            density_shape = tf.stack([tf.shape(input_layer)[0]] + list(num_classes))
             self._density = tf.reshape(self._q, density_shape)
 
     @property
@@ -136,13 +141,13 @@ class DiscreteParametricMixtureLayer(DiscreteDistributionLayer):
                 grid_values = tf.constant(grid_values, tf.float32)
                 self._grid_values = grid_values
 
-                q_density_shape = tf.pack([tf.shape(self._q)[0] * tf.shape(self._grid_values)[0], tf.shape(self._q)[1]])
+                q_density_shape = tf.stack([tf.shape(self._q)[0] * tf.shape(self._grid_values)[0], tf.shape(self._q)[1]])
                 q_density = tf.reshape(tf.tile(self._q, [1, tf.shape(self._grid_values)[0]]), q_density_shape)
-                labels_density = tf.tile(self._grid_values, tf.pack([tf.shape(self._q)[0], 1]))
-                logprobs_density_shape = tf.pack([tf.shape(self._q)[0], tf.shape(self._grid_values)[0]])
+                labels_density = tf.tile(self._grid_values, tf.stack([tf.shape(self._q)[0], 1]))
+                logprobs_density_shape = tf.stack([tf.shape(self._q)[0], tf.shape(self._grid_values)[0]])
                 logprobs_density = tf.reshape(self._calc_log_probs(labels_density, q_density), logprobs_density_shape)
-                bin_probs = tf.exp(logprobs_density) / tf.reduce_sum(tf.exp(logprobs_density), reduction_indices=[1], keep_dims=True)
-                density_shape = tf.pack([tf.shape(self._q)[0]] + list(self._num_classes))
+                bin_probs = tf.exp(logprobs_density) / tf.reduce_sum(tf.exp(logprobs_density), axis=[1], keep_dims=True)
+                density_shape = tf.stack([tf.shape(self._q)[0]] + list(self._num_classes))
                 self._density = tf.reshape(bin_probs, density_shape)
 
             # TEMP: Hack to make calculating the full conditional distribution scalable
@@ -210,11 +215,11 @@ class MultiscaleLayer(DiscreteDistributionLayer):
 
             # q is the value of the tree nodes
             # m is the value of the multinomial bins
-            self._q = tf.inv(1 + tf.exp(-(tf.matmul(input_layer,W) + b)))
+            self._q = tf.reciprocal(1 + tf.exp(-(tf.matmul(input_layer,W) + b)))
             r = splits * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0))
             s = (1 - splits) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0))
             self._loss_function = tf.reduce_mean(-tf.reduce_sum(z * (r+s),
-                                            reduction_indices=[1]))
+                                            axis=[1]))
 
             # Convert from multiscale output to multinomial output
             L, R = self.multiscale_splits_masks()
@@ -223,12 +228,12 @@ class MultiscaleLayer(DiscreteDistributionLayer):
             m = tf.map_fn(lambda q_i: self.multiscale_to_multinomial(q_i, L, R, q_tiles), self._q)
 
             # Reshape to the original dimensions of the density
-            density_shape = tf.pack([tf.shape(self._q)[0]] + list(self._num_classes))
+            density_shape = tf.stack([tf.shape(self._q)[0]] + list(self._num_classes))
             self._density = tf.reshape(m, density_shape)
 
             self._cross_entropy = tf.reduce_mean(-tf.reduce_sum(self._labels * tf.log(tf.clip_by_value(m, 1e-10, 1.0)) 
                                                              + (1 - self._labels) * tf.log(tf.clip_by_value(1 - m, 1e-10, 1.0)),
-                                        reduction_indices=[1]))
+                                        axis=[1]))
 
     @property
     def labels(self):
@@ -260,7 +265,7 @@ class MultiscaleLayer(DiscreteDistributionLayer):
         qt = tf.tile(tf.expand_dims(q_i, -1), q_tiles)
         qt = R * qt + L * (1 - qt)
         qt += tf.to_float(tf.equal(qt, 0))
-        return tf.reduce_prod(qt, reduction_indices=[0])
+        return tf.reduce_prod(qt, axis=[0])
 
     def multiscale_splits_masks(self):
         data = np.array(list(np.ndindex(self._num_classes)))
@@ -291,15 +296,15 @@ class TrendFilteringLayer(DiscreteDistributionLayer):
             self._q = tf.nn.softmax(z)
             self._cross_entropy = tf.reduce_mean(-tf.reduce_sum(self._labels * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0)) 
                                                           + (1 - self._labels) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0)),
-                                        reduction_indices=[1]))
+                                        axis=[1]))
 
             # Get the trend filtering penalty
             fv = trend_filtering_penalty(z, self._num_classes, self._k, penalty=self._penalty)
-            reg = tf.mul(lam, fv)
+            reg = tf.multiply(lam, fv)
             
             self._loss_function = tf.add(self._cross_entropy, reg)
             # Reshape to the original dimensions of the density
-            density_shape = tf.pack([tf.shape(input_layer)[0]] + list(num_classes))
+            density_shape = tf.stack([tf.shape(input_layer)[0]] + list(num_classes))
             self._density = tf.reshape(self._q, density_shape)
 
     @property
@@ -366,11 +371,11 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
             # q is the value of the tree nodes
             # m is the value of the multinomial bins
             # z is the log-space version of m
-            self._q = tf.inv(1 + tf.exp(-(tf.matmul(input_layer,W) + b)))
+            self._q = tf.reciprocal(1 + tf.exp(-(tf.matmul(input_layer,W) + b)))
             r = splits * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0))
             s = (1 - splits) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0))
             self._multiscale_loss = tf.reduce_mean(-tf.reduce_sum(masks * (r+s),
-                                            reduction_indices=[1]))
+                                            axis=[1]))
 
             # Convert from multiscale output to multinomial output
             L, R = self.multiscale_splits_masks()
@@ -382,12 +387,12 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
 
             # Get the trend filtering penalty
             fv = trend_filtering_penalty(z, self._num_classes, self._k, penalty=self._penalty)
-            reg = tf.mul(self._lam, fv)
+            reg = tf.multiply(self._lam, fv)
 
             self._loss_function = tf.add(self._multiscale_loss, reg)
 
             # Reshape to the original dimensions of the density
-            density_shape = tf.pack([tf.shape(self._q)[0]] + list(self._num_classes))
+            density_shape = tf.stack([tf.shape(self._q)[0]] + list(self._num_classes))
             self._density = tf.reshape(m, density_shape)
 
     @property
@@ -420,7 +425,7 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
         qt = tf.tile(tf.expand_dims(q_i, -1), q_tiles)
         qt = R * qt + L * (1 - qt)
         qt += tf.to_float(tf.equal(qt, 0))
-        return tf.reduce_prod(qt, reduction_indices=[0])
+        return tf.reduce_prod(qt, axis=[0])
 
     def multiscale_splits_masks(self):
         data = np.array(list(np.ndindex(self._num_classes)))
@@ -468,13 +473,13 @@ class DiscreteLogisticMixtureLayer(DiscreteDistributionLayer):
                 grid_values = tf.constant(grid_values, tf.float32)
                 self._grid_values = grid_values
 
-                q_density_shape = tf.pack([tf.shape(self._q)[0] * tf.shape(self._grid_values)[0], tf.shape(self._q)[1]])
+                q_density_shape = tf.stack([tf.shape(self._q)[0] * tf.shape(self._grid_values)[0], tf.shape(self._q)[1]])
                 q_density = tf.reshape(tf.tile(self._q, [1, tf.shape(self._grid_values)[0]]), q_density_shape)
-                labels_density = tf.tile(self._grid_values, tf.pack([tf.shape(self._q)[0], 1]))
-                logprobs_density_shape = tf.pack([tf.shape(self._q)[0], tf.shape(self._grid_values)[0]])
+                labels_density = tf.tile(self._grid_values, tf.stack([tf.shape(self._q)[0], 1]))
+                logprobs_density_shape = tf.stack([tf.shape(self._q)[0], tf.shape(self._grid_values)[0]])
                 logprobs_density = tf.reshape(discretized_mix_logistic_log_probs_nd(labels_density, q_density, nr_mix=self._num_components, ndims=self._ndims, num_classes=np.array(self._num_classes)), logprobs_density_shape)
-                bin_probs = tf.exp(logprobs_density) / tf.reduce_sum(tf.exp(logprobs_density), reduction_indices=[1], keep_dims=True)
-                density_shape = tf.pack([tf.shape(self._q)[0]] + list(self._num_classes))
+                bin_probs = tf.exp(logprobs_density) / tf.reduce_sum(tf.exp(logprobs_density), axis=[1], keep_dims=True)
+                density_shape = tf.stack([tf.shape(self._q)[0]] + list(self._num_classes))
                 self._density = tf.reshape(bin_probs, density_shape)
 
     @property
@@ -579,22 +584,22 @@ class LocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         # input_layer is [batchsize, inputlayersize]
         # sampled_W is [batchsize, inputlayersize, dim1size]
         # sampled_q is [batchsize, dim1size] corresponding to q = X*W + b
-        sampled_q = tf.reshape(tf.batch_matmul(tf.expand_dims(self._input_layer,1), sampled_W), 
+        sampled_q = tf.reshape(tf.matmul(tf.expand_dims(self._input_layer,1), sampled_W), 
                                     [-1, dim1size]) + sampled_b
-        sampled_probs = tf.inv(1 + tf.exp(-sampled_q))
-        log_probs = tf.log(tf.clip_by_value(tf.select(splits > 0, sampled_probs, 1-sampled_probs), 1e-10, 1.0))
+        sampled_probs = tf.reciprocal(1 + tf.exp(-sampled_q))
+        log_probs = tf.log(tf.clip_by_value(tf.where(splits > 0, sampled_probs, 1-sampled_probs), 1e-10, 1.0))
         log_probs_dims = tf.reshape(log_probs, [-1] + dims)
-        return tf.reduce_sum(log_probs_dims, reduction_indices=[len(dims)])
+        return tf.reduce_sum(log_probs_dims, axis=[len(dims)])
 
     def get_density_probs(self):
         q = tf.matmul(self._input_layer, tf.transpose(self._W)) + self._b
-        probs = tf.inv(1 + tf.exp(-q)) # [batchsize, num_nodes]
+        probs = tf.reciprocal(1 + tf.exp(-q)) # [batchsize, num_nodes]
         log_probs = tf.map_fn(lambda x: self._grid_log_probs(x), probs) # [batchsize, gridlen]
-        return tf.exp(log_probs) / tf.reduce_sum(tf.exp(log_probs), reduction_indices=range(1,len(self._num_classes)+1), keep_dims=True)
+        return tf.exp(log_probs) / tf.reduce_sum(tf.exp(log_probs), axis=range(1,len(self._num_classes)+1), keep_dims=True)
 
     def _grid_log_probs(self, x):
         prob_nodes = tf.gather(x, self._grid_indices)
-        return tf.reduce_sum(tf.log(tf.clip_by_value(tf.select(self._grid_splits > 0, prob_nodes, 1-prob_nodes), 1e-10, 1.0)), [-1])
+        return tf.reduce_sum(tf.log(tf.clip_by_value(tf.where(self._grid_splits > 0, prob_nodes, 1-prob_nodes), 1e-10, 1.0)), [-1])
 
     def fill_train_dict(self, feed_dict, batch_positives):
         if self._one_hot:

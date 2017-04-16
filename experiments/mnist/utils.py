@@ -2,8 +2,8 @@ import os
 import numpy as np
 import collections
 from scipy.stats import norm, expon
-from tfcde.datasets import DataSet
-from tfcde.utils import tv_distance, ks_distance
+from tfsdp.datasets import DataSet
+from tfsdp.utils import tv_distance, ks_distance
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets, extract_images, extract_labels
 

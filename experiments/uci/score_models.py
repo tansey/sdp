@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from tfcde.utils import pretty_str
+from tfsdp.utils import pretty_str
 from utils import dataset_details
 
 def get_score_if_best(filename, cur_best, logprobs, rmse, idx):
