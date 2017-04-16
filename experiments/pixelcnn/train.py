@@ -34,7 +34,7 @@ def main():
     parser = argparse.ArgumentParser(description='Trains an SDP model on preprocessed PixelCNN++ features.')
 
     # Experiment settings
-    parser.add_argument('inputdir', default='experiments/pixelcnn/data', help='The directory where the input data files will be stored.')
+    parser.add_argument('inputdir', default='experiments/pixelcnn/data', help='The directory where the input data files are be stored.')
     parser.add_argument('--outputdir', default='experiments/pixelcnn/results', help='The directory where the output data files will be stored.')
     parser.add_argument('--validation_pct', type=float, default=0.2,
                                         help='The number of samples to hold out for a validation set. This is a percentage of the training samples.')
