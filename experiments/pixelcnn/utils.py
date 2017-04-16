@@ -43,7 +43,7 @@ class Dataset(object):
         prefix = 'test' if self._test else 'train'
         features = np.load(os.path.join(self._path, '{}_features_{}.npy'.format(prefix, self._nfiles)))
         labels = np.load(os.path.join(self._path, '{}_pixels_{}.npy'.format(prefix, self._nfiles)))
-        return features, labels / 16 # TEMP
+        return features.reshape((-1,3)), (labels / 16).reshape((-1,3)) # TEMP
 
     @property
     def nfeatures(self):
@@ -78,7 +78,7 @@ class Dataset(object):
             self.reset() # reset for next time we get called
             raise StopIteration
 
-        return self._load(inds[p])
+        return self._load(self._perm[p])
 
     def __iter__(self):
         return self
