@@ -93,7 +93,7 @@ def load_dataset(inputdir='experiments/pixelcnn/data/',
     rng = np.random.RandomState(seed)
     indices = np.arange(all_train.nfiles)
     rng.shuffle(indices)
-    train_start = int(np.round(len(all_train.nfiles) * validation_pct))
+    train_start = int(np.round(all_train.nfiles * validation_pct))
     validation_indices, train_indices = indices[:train_start], indices[train_start:]
     train = Dataset(inputdir, file_indices=train_indices)
     validation = Dataset(inputdir, file_indices=validation_indices)
