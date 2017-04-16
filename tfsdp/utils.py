@@ -246,7 +246,7 @@ def scipy_sparse_coo_to_tensorflow_sparse(x):
     values = x.data
     indices = list(zip(x.row, x.col))
     shape = x.shape
-    return tf.sparse_reorder(tf.SparseTensor(indices=indices, values=values, shape=shape))
+    return tf.sparse_reorder(tf.SparseTensor(indices=indices, values=values, dense_shape=shape))
 
 def get_delta(D, k, sparse=True):
     '''Calculate the k-th order trend filtering matrix given the oriented edge
