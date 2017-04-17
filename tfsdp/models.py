@@ -677,7 +677,8 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         if not hasattr(num_classes, "__len__"):
             num_classes = (num_classes, )
 
-        self._num_classes = np.array(num_classes)
+        self._num_classes = num_classes
+        self._float_num_classes = np.array(num_classes, dtype=float)
         self._dim_models = []
         train_losses = []
         test_losses = []
@@ -706,7 +707,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
     def fill_train_dict(self, feed_dict, labels):
         if len(labels.shape) == 1:
             labels = labels[:,np.newaxis]
-        feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:].astype(float)
+        feed_dict[self._labels] = labels / self._float_num_classes[np.newaxis,:]
         for dim,model in enumerate(self._dim_models):
             model.fill_train_dict(feed_dict, labels[:,dim])
         feed_dict[K.learning_phase()] = 1
@@ -714,13 +715,13 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
     def fill_test_dict(self, feed_dict, labels):
         if len(labels.shape) == 1:
             labels = labels[:,np.newaxis]
-        feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:].astype(float)
+        feed_dict[self._labels] = labels / self._float_num_classes[np.newaxis,:]
         for dim,model in enumerate(self._dim_models):
             model.fill_test_dict(feed_dict, labels[:,dim])
         feed_dict[K.learning_phase()] = 0
 
     def dist(self, X, sess, feed_dict):
-        if len(X.shape) == len(self._num_classes.shape):
+        if len(X.shape) == 1:
             X = np.expand_dims(X, axis=0)
         feed_dict[K.learning_phase()] = 0
         return self.dist_helper(0, X, np.zeros((len(X), len(self._num_classes))), sess, feed_dict)
@@ -731,7 +732,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         model = self._dim_models[dim]
         for label in xrange(self._num_classes[i]):
             labels[dim] = label
-            feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:].astype(float)
+            feed_dict[self._labels] = labels / self._float_num_classes[np.newaxis,:]
             model.fill_test_dict(feed_dict, labels[:,dim])
             dim_density = sess.run(model.density, feed_dict)
             if dim < (len(self._num_classes) - 1):
