@@ -722,6 +722,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
     def dist(self, X, sess, feed_dict):
         if len(X.shape) == len(self._num_classes.shape):
             X = np.expand_dims(X, axis=0)
+        feed_dict[K.learning_phase()] = 0
         return self.dist_helper(0, X, np.zeros((len(X), len(self._num_classes))), sess, feed_dict)
 
     def dist_helper(self, dim, X, labels, sess, feed_dict):
@@ -730,6 +731,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         model = self._dim_models[dim]
         for label in xrange(int(self._num_classes[i])):
             labels[dim] = label
+            feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:]
             model.fill_test_dict(feed_dict, labels[:,dim])
             dim_density = sess.run(model.density, feed_dict)
             if dim < (len(self._num_classes) - 1):

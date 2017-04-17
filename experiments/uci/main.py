@@ -19,8 +19,11 @@ def explicit_score(sess, model, dataset):
     squared_err = 0
     indices = np.array(list(np.ndindex(model.layer._num_classes)))
     for i in xrange(len(dataset.test.features)):
-        feed_dict = model.test_dict(dataset.test.features[i:i+1], dataset.test.labels[i:i+1])
-        density = sess.run(model.density, feed_dict=feed_dict)[0]
+        if model.density:
+            feed_dict = model.test_dict(dataset.test.features[i:i+1], dataset.test.labels[i:i+1])
+            density = sess.run(model.density, feed_dict=feed_dict)[0]
+        else:
+            density = model.dist(dataset.test.features[i:i+1], sess, {})
         logprobs += np.log(density[tuple(dataset.test.labels[i])])
         prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
         squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
