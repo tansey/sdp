@@ -43,6 +43,7 @@ def main():
                                         help='The number of samples to hold out for a validation set. This is a percentage of the training samples.')
     parser.add_argument('--nepochs', type=int, default=1000, help='The maximum number of training epochs.')
     parser.add_argument('--batchsize', type=int, default=50, help='The mini-batch size.')
+    parser.add_argument('--resolution', type=int, default=256, help='The resolution of a sub-pixel.')
     
     # SDP settings
     parser.add_argument('--lam', type=float, default=0.05, help='The lambda penalty value for the smoothed k-d tree.')

@@ -10,12 +10,14 @@ class Dataset(object):
                path,
                test_set=False,
                file_indices=None,
-               seed=42):
+               seed=42,
+               resolution=256):
         self._path = path
         self._test = test_set
         self._epochs_completed = 0
         self._index_in_epoch = 0
         self._rng = np.random.RandomState(seed)
+        self._resolution = resolution
         self.p = 0
         self._count_samples()
         if file_indices is not None:
@@ -34,7 +36,7 @@ class Dataset(object):
                 features, labels = self._load(0)
                 self._examples_per_file = np.prod(features.shape[:-1])
                 self._nfeatures = features.shape[-1]
-                self._nlabels = tuple([16] * labels.shape[-1]) # TEMP
+                self._nlabels = tuple([self._resolution] * labels.shape[-1])
             self._nexamples += self._examples_per_file
             self._nfiles += 1
         self._perm = np.arange(self._nfiles)
@@ -80,7 +82,7 @@ class Dataset(object):
 
         features, labels = self._load(self._perm[self.p])
         self.p += 1
-        return features.reshape((-1,self.nfeatures)), (labels / 4).reshape((-1,3)) # TEMP
+        return features.reshape((-1,self.nfeatures)), (labels / (256 / self._resolution)).reshape((-1,3)) # TEMP
 
     def __iter__(self):
         return self
@@ -90,16 +92,16 @@ class Dataset(object):
 
 
 def load_dataset(inputdir='experiments/pixelcnn/data/',
-                 validation_pct=0.2, seed=49, **kwargs):
+                 validation_pct=0.2, resolution=256, seed=49, **kwargs):
     all_train = Dataset(inputdir)
     rng = np.random.RandomState(seed)
     indices = np.arange(all_train.nfiles)
     rng.shuffle(indices)
     train_start = int(np.round(all_train.nfiles * validation_pct))
     validation_indices, train_indices = indices[:train_start], indices[train_start:]
-    train = Dataset(inputdir, file_indices=train_indices)
-    validation = Dataset(inputdir, file_indices=validation_indices)
-    test = Dataset(inputdir, test_set=True)
+    train = Dataset(inputdir, file_indices=train_indices, resolution=resolution)
+    validation = Dataset(inputdir, file_indices=validation_indices, resolution=resolution)
+    test = Dataset(inputdir, test_set=True, resolution=resolution)
     return Datasets(train=train, validation=validation, test=test, nfeatures=train.nfeatures, nlabels=train.nlabels)
 
 
