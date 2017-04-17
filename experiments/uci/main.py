@@ -24,6 +24,10 @@ def explicit_score(sess, model, dataset):
             density = sess.run(model.density, feed_dict=feed_dict)[0]
         else:
             density = model.layer.dist(dataset.test.features[i:i+1], sess, feed_dict)[0]
+        if np.abs(density.sum() - 1.) > 1e-10:
+            raise Exception('Distribution does not add up: {}'.format(density.sum()))
+        if density.min() < 0 or density.max() > 1:
+            raise Exception('Distribution outside acceptable bounds: [{}, {}]'.format(density.min(), density.max()))
         logprobs += np.log(density[tuple(dataset.test.labels[i])])
         prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
         squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
