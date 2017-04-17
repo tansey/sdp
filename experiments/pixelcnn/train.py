@@ -137,7 +137,7 @@ def main():
             if step % 1 == 0: # TEMP
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
-            if step % 10 == 0:# TEMP
+            if step == 10:# TEMP
                 break # TEMP
 
         # Test if the model improved on the validation set
