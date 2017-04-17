@@ -707,16 +707,16 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         if len(labels.shape) == 1:
             labels = labels[:,np.newaxis]
         feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:]
-        for model in self._dim_models:
-            model.fill_train_dict(feed_dict, labels)
+        for dim,model in enumerate(self._dim_models):
+            model.fill_train_dict(feed_dict, labels[:,dim])
         feed_dict[K.learning_phase()] = 1
 
     def fill_test_dict(self, feed_dict, labels):
         if len(labels.shape) == 1:
             labels = labels[:,np.newaxis]
         feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:]
-        for model in self._dim_models:
-            model.fill_test_dict(feed_dict, labels)
+        for dim,model in enumerate(self._dim_models):
+            model.fill_test_dict(feed_dict, labels[:,dim])
         feed_dict[K.learning_phase()] = 0
 
     @property
