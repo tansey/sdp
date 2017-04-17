@@ -66,7 +66,7 @@ def main():
     if not os.path.exists(dargs['outputdir']):
         os.makedirs(dargs['outputdir'])
     
-    if args.model == 'sdp':
+    if args.model in ('sdp', 'fast-sdp'):
         dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{k}_{lam}_{train_id}'.format(**dargs))
         dargs['variable_scope'] = '{model}-{dataset}-{k}-{lam}-{train_id}'.format(**dargs)
     elif args.model in ('gmm', 'lmm'):
