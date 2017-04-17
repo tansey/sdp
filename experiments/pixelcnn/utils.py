@@ -38,12 +38,11 @@ class Dataset(object):
             self._nexamples += self._examples_per_file
             self._nfiles += 1
         self._perm = np.arange(self._nfiles)
-        print self._perm, self._nfiles
 
     def _load(self, file_index):
         prefix = 'test' if self._test else 'train'
-        features = np.load(os.path.join(self._path, '{}_features_{}.npy'.format(prefix, self._nfiles)))
-        labels = np.load(os.path.join(self._path, '{}_pixels_{}.npy'.format(prefix, self._nfiles)))
+        features = np.load(os.path.join(self._path, '{}_features_{}.npy'.format(prefix, file_index)))
+        labels = np.load(os.path.join(self._path, '{}_pixels_{}.npy'.format(prefix, file_index)))
         return features, labels
 
     @property
