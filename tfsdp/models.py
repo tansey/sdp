@@ -718,6 +718,10 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         feed_dict[K.learning_phase()] = 0
 
     @property
+    def density(self):
+        return None # TODO
+
+    @property
     def labels(self):
         return None
 
