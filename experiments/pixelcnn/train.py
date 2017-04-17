@@ -25,13 +25,14 @@ def explicit_score(sess, model, dataset):
         for i in xrange(len(X)):
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
             density = sess.run(model.density, feed_dict=feed_dict)[0]
-            logprobs += np.log(density[tuple(y[i])])
+            logprobs -= np.log(density[tuple(y[i])])
             break # TEMP
         break # TEMP
             # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
             # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
     # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
-    bits_per_dim = logprobs / (np.log(2.) * 3. * dataset.test.nexamples)
+    # bits_per_dim = logprobs / (np.log(2.) * 3. * dataset.test.nexamples)
+    bits_per_dim = logprobs / (np.log(2.) * 3. * 1.) # TEMP
     print 'Explicit logprobs: {} Bits/dim: {}'.format(logprobs, bits_per_dim)
     return logprobs, bits_per_dim
 
