@@ -727,8 +727,8 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         return self.dist_helper(0, X, np.zeros((len(X), len(self._num_classes))), sess, feed_dict)
 
     def dist_helper(self, dim, X, labels, sess, feed_dict):
-        dims = list(self._num_classes)[:dim+1]
-        results = np.zeros([len(X)] + dims)
+        dims = [len(X)] + list(self._num_classes)[dim:]
+        results = np.zeros(dims)
         model = self._dim_models[dim]
         for label in xrange(self._num_classes[dim]):
             labels[:,dim] = label
