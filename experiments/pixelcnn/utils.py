@@ -38,6 +38,7 @@ class Dataset(object):
             self._nexamples += self._examples_per_file
             self._nfiles += 1
         self._perm = np.arange(self._nfiles)
+        print self._perm, self._nfiles
 
     def _load(self, file_index):
         prefix = 'test' if self._test else 'train'
