@@ -15,8 +15,8 @@ def score_model(sess, model, dataset):
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
             loss += sess.run(model.test_loss, feed_dict=feed_dict)
             nexamples += 1
-            bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
-            print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
+    bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
+    print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
     return loss
 
 def explicit_score(sess, model, dataset):
@@ -134,13 +134,15 @@ def main():
                 end = min(start + args.batchsize, len(X))
                 feed_dict = model.train_dict(X[start:end], y[start:end])
                 sess.run(train_step, feed_dict=feed_dict)
-            if step % 1 == 0: # TEMP
+            if step % 100 == 0:
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
-            if step == 10:# TEMP
-                break # TEMP
+            # if step == 10:# TEMP
+            #     break # TEMP
 
         # Test if the model improved on the validation set
+        print('Validating...')
+        sys.stdout.flush()
         validation_loss = score_model(sess, model, dataset)
 
         # Check if we are improving
