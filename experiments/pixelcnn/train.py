@@ -137,6 +137,8 @@ def main():
             if step % 1 == 0: # TEMP
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
+            if step % 10 == 0:# TEMP
+                break # TEMP
 
         # Test if the model improved on the validation set
         validation_loss = score_model(sess, model, dataset)
