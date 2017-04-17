@@ -102,6 +102,7 @@ def main():
             for i in xrange(int(np.ceil(len(X) / float(args.batchsize)))):
                 start = i*args.batchsize
                 end = min(start + args.batchsize, len(X))
+                print step, start, end
                 feed_dict = model.train_dict(X[start:end], y[start:end])
                 sess.run(train_step, feed_dict=feed_dict)
             if step % 1 == 0: # TEMP
