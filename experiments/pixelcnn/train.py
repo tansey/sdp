@@ -15,8 +15,8 @@ def score_model(sess, model, dataset):
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
             loss += sess.run(model.test_loss, feed_dict=feed_dict)
             nexamples += 1
-    bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
-    print 'Validation score: {} Bits/dim: {}'.format(loss, bits_per_dim)
+            bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
+            print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
     return loss
 
 def explicit_score(sess, model, dataset):
