@@ -80,7 +80,7 @@ class Dataset(object):
 
         features, labels = self._load(self._perm[self.p])
         self.p += 1
-        return features.reshape((-1,self.nfeatures)), (labels / 16).reshape((-1,3)) # TEMP
+        return features.reshape((-1,self.nfeatures)), (labels / 4).reshape((-1,3)) # TEMP
 
     def __iter__(self):
         return self
