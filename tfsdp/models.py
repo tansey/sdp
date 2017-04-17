@@ -701,6 +701,8 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         self._train_loss = tf.reduce_sum(train_losses)
         self._test_loss = tf.reduce_sum(test_losses)
 
+        self._density = None
+
     def fill_train_dict(self, feed_dict, labels):
         if len(labels.shape) == 1:
             labels = labels[:,np.newaxis]
@@ -716,10 +718,6 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         for model in self._dim_models:
             model.fill_test_dict(feed_dict, labels)
         feed_dict[K.learning_phase()] = 0
-
-    @property
-    def density(self):
-        return None # TODO
 
     @property
     def labels(self):
