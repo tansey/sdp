@@ -23,8 +23,9 @@ def explicit_score(sess, model, dataset):
     for X, y in dataset.test:
         for i in xrange(len(X)):
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
-            density = sess.run(model.density, feed_dict=feed_dict)[0]
-            logprobs -= np.log(density[tuple(y[i])] * (np.prod(dataset.nlabels) / 255.**3))
+            # density = sess.run(model.density, feed_dict=feed_dict)[0]
+            # logprobs -= np.log(density[tuple(y[i])] * (np.prod(dataset.nlabels) / 255.**3))
+            logprobs -= sess.run(model.test_loss, feed_dict=feed_dict)
             nexamples += 1.
             # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
             # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
@@ -39,7 +40,7 @@ def main():
 
     # Experiment settings
     parser.add_argument('inputdir', default='experiments/pixelcnn/data', help='The directory where the input data files are be stored.')
-    parser.add_argument('--model', choices=['multinomial', 'gmm', 'lmm', 'sdp'], default='sdp', help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed dyadic partitions.')
+    parser.add_argument('--model', choices=['multinomial', 'gmm', 'lmm', 'sdp', 'fast-sdp'], default='fast-sdp', help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed dyadic partitions.')
     parser.add_argument('--outputdir', default='experiments/pixelcnn/results', help='The directory where the output data files will be stored.')
     parser.add_argument('--validation_pct', type=float, default=0.2,
                                         help='The number of samples to hold out for a validation set. This is a percentage of the training samples.')

@@ -1,6 +1,9 @@
 import numpy as np
 import tensorflow as tf
 import itertools
+from keras import backend as K
+from keras.regularizers import l2
+from keras.layers import Dense, Dropout, Flatten
 from utils import ints_to_multiscale, \
                   weight_variable, \
                   bias_variable, \
@@ -661,6 +664,85 @@ class LocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
     @property
     def test_loss(self):
         return self._neg_log_likelihood
+
+class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
+    '''A dyadic decomposition model with trend filtering on the logits. This
+    model smooths only a local region around the target node, making it much
+    more scalable to larger spaces. It also only explicitly models the factorized
+    version of the density (i.e. the chain of conditionals) rather than the joint.
+    This means the model complexity now grows linearly with the size of each
+    dimension, rather than exponentially.'''
+    def __init__(self, input_layer, input_layer_size, num_classes, 
+                    scope=None, dense=None, **kwargs):
+        if not hasattr(num_classes, "__len__"):
+            num_classes = (num_classes, )
+        if not hasattr(neighbor_radius, "__len__"):
+            neighbor_radius = tuple([neighbor_radius]*len(num_classes))
+
+        self._num_classes = np.array(num_classes, dtype=float)
+        self._dim_models = []
+        train_losses = []
+        test_losses = []
+        self._labels = tf.placeholder(tf.float32, [None, len(num_classes)])
+        for dim, dimsize in enumerate(num_classes):
+            dim_layer = input_layer
+            dim_layer_size = input_layer_size
+            if dim > 0:
+                dim_layer = tf.concat([dim_layer, self._labels[:,:dim]], axis=1)
+                dim_layer_size += dim
+            if dense is not None:
+                for d in dense:
+                    dim_layer = Dense(d, W_regularizer=l2(0.01), activation=K.relu)(dim_layer)
+                    dim_layer = Dropout(0.5)(dim_layer)
+                    dim_layer_size = d
+            dim_model = LocallySmoothedMultiscaleLayer(dim_layer, dim_layer_size, dimsize, scope=scope, **kwargs)
+            train_losses.append(dim_model.train_loss)
+            test_losses.append(dim_model.test_loss)
+            self._dim_models.append(dim_model)
+
+        self._train_loss = tf.reduce_sum(train_losses)
+        self._test_loss = tf.reduce_sum(test_losses)
+
+    def fill_train_dict(self, feed_dict, labels):
+        if len(labels.shape) == 1:
+            labels = labels[:,np.newaxis]
+        feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:]
+        for model in self._dim_models:
+            model.fill_train_dict(feed_dict, labels)
+        feed_dict[K.learning_phase()] = 1
+
+    def fill_test_dict(self, feed_dict, labels):
+        if len(labels.shape) == 1:
+            labels = labels[:,np.newaxis]
+        feed_dict[self._labels] = labels / self._num_classes[np.newaxis,:]
+        for model in self._dim_models:
+            model.fill_test_dict(feed_dict, labels)
+        feed_dict[K.learning_phase()] = 0
+
+    @property
+    def labels(self):
+        return None
+
+    @property
+    def density(self):
+        return self._density
+
+    @property
+    def output(self):
+        return None
+
+    @property
+    def train_loss(self):
+        return self._loss_function
+
+    @property
+    def test_loss(self):
+        return self._neg_log_likelihood
+
+
+
+
+
 
 
 
