@@ -82,9 +82,9 @@ def create_model(model, dataset, dense=None, inputdir=None, variable_scope='pixe
     with tf.variable_scope(variable_scope):
         X = tf.placeholder(tf.float32, [None, dataset.nfeatures], name='X')
 
+        input_layer = X
+        input_layer_size = dataset.nfeatures
         # Add some optional dense layers to better learn the mapping from features to classes
-        # input_layer = X
-        # input_layer_size = dataset.nfeatures
         # if dense is not None:
         #     for d in dense:
         #         print 'Dense: {0}'.format(d)
