@@ -739,7 +739,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
                 next_density = self.dist_helper(dim+1, X, labels, sess, feed_dict)
             else:
                 next_density = np.array([1.]*len(X))
-            print dim_density.shape, next_density.shape
+            print dim_density.shape, np.expand_dims(next_density, axis=1)
             results[:,label] = dim_density * np.expand_dims(next_density, axis=1)
         return results
 
