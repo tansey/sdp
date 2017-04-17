@@ -41,6 +41,7 @@ def main():
 
     # Experiment settings
     parser.add_argument('inputdir', default='experiments/pixelcnn/data', help='The directory where the input data files are be stored.')
+    parser.add_argument('--model', choices=['multinomial', 'gmm', 'lmm', 'sdp'], default='sdp', help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed dyadic partitions.')
     parser.add_argument('--outputdir', default='experiments/pixelcnn/results', help='The directory where the output data files will be stored.')
     parser.add_argument('--validation_pct', type=float, default=0.2,
                                         help='The number of samples to hold out for a validation set. This is a percentage of the training samples.')
@@ -52,18 +53,30 @@ def main():
     parser.add_argument('--k', type=int, default=1, help='The order of the trend filtering penalty matrix for the smoothed k-d tree.')
     parser.add_argument('--neighbor_radius', type=int, default=5, help='The number of neighbors in each axis-aligned direction along the grid for the smoothed k-d tree.')
 
+    # GMM/LMM settings
+    parser.add_argument('--num_components', type=int, default=5, help='The number of mixture components for gmm or lmm models.')
+
     # Get the arguments from the command line
     args = parser.parse_args()
     dargs = vars(args)
-    dargs['model'] = 'sdp'
     dargs['train_id'] = 0
+    dargs['dataset'] = 'cifar10'
 
     # Get the parameters
     if not os.path.exists(dargs['outputdir']):
         os.makedirs(dargs['outputdir'])
     
-    dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{k}_{lam}_{train_id}'.format(**dargs))
-    dargs['variable_scope'] = '{model}-{k}-{lam}-{train_id}'.format(**dargs)
+    if args.model == 'sdp':
+        dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{k}_{lam}_{train_id}'.format(**dargs))
+        dargs['variable_scope'] = '{model}-{dataset}-{k}-{lam}-{train_id}'.format(**dargs)
+    elif args.model in ('gmm', 'lmm'):
+        dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{num_components}_{train_id}'.format(**dargs))
+        dargs['variable_scope'] = '{model}-{dataset}-{num_components}-{train_id}'.format(**dargs)
+    elif args.model == 'multinomial':
+        dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{train_id}'.format(**dargs))
+        dargs['variable_scope'] = '{model}-{dataset}-{train_id}'.format(**dargs)
+    else:
+        raise Exception('Unknown model type: {model}'.format(**dargs))
     
     dataset = load_dataset(**dargs)
     dargs['dataset'] = dataset
