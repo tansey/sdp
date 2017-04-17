@@ -19,15 +19,17 @@ def explicit_score(sess, model, dataset):
     logprobs = 0
     squared_err = 0
     indices = np.array(list(np.ndindex(model.layer._num_classes)))
+    nexamples = 0.
     for X, y in dataset.test:
         for i in xrange(len(X)):
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
             density = sess.run(model.density, feed_dict=feed_dict)[0]
             logprobs -= np.log(density[tuple(y[i])] * (np.prod(dataset.nlabels) / 255.**3))
+            nexamples += 1.
             # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
             # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
     # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
-    bits_per_dim = logprobs / (np.log(2.) * 3. * dataset.test.nexamples)
+    bits_per_dim = logprobs / (np.log(2.) * 3. * nexamples)
     print 'Explicit logprobs: {} Bits/dim: {}'.format(logprobs, bits_per_dim)
     return logprobs, bits_per_dim
 
@@ -102,7 +104,6 @@ def main():
             for i in xrange(int(np.ceil(len(X) / float(args.batchsize)))):
                 start = i*args.batchsize
                 end = min(start + args.batchsize, len(X))
-                print step, start, end
                 feed_dict = model.train_dict(X[start:end], y[start:end])
                 sess.run(train_step, feed_dict=feed_dict)
             if step % 1 == 0: # TEMP
