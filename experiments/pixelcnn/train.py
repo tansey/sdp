@@ -10,24 +10,28 @@ from utils import load_dataset
 def score_model(sess, model, dataset):
     loss = 0
     for step, (X, y) in enumerate(dataset.validation):
-        feed_dict = model.test_dict(X, y)
-        loss += sess.run(model.test_loss, feed_dict=feed_dict)
+        for i in xrange(len(X)):
+            feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
+            loss += sess.run(model.test_loss, feed_dict=feed_dict)
+            break # TEMP
+        break # TEMP
     return loss
 
 def explicit_score(sess, model, dataset):
     logprobs = 0
     squared_err = 0
     indices = np.array(list(np.ndindex(model.layer._num_classes)))
-    for i in xrange(len(dataset.test.features)):
-        feed_dict = model.test_dict(dataset.test.features[i:i+1], dataset.test.labels[i:i+1])
-        density = sess.run(model.density, feed_dict=feed_dict)[0]
-        logprobs += np.log(density[tuple(dataset.test.labels[i])])
-        prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
-        squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
-    rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
+    for X, y in dataset.test:
+        for i in xrange(len(X)):
+            feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
+            density = sess.run(model.density, feed_dict=feed_dict)[0]
+            logprobs += np.log(density[tuple(y[i])])
+            # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
+            # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
+    # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
     bits_per_dim = logprobs / (np.log(2.) * 3. * len(dataset.test.features))
-    print 'Explicit logprobs: {0} RMSE: {1} Bits/dim: {2}'.format(logprobs, rmse, bits_per_dim)
-    return logprobs, rmse, bits_per_dim
+    print 'Explicit logprobs: {} Bits/dim: {}'.format(logprobs, bits_per_dim)
+    return logprobs, bits_per_dim
 
 
 def main():
@@ -87,9 +91,11 @@ def main():
                 feed_dict = model.train_dict(X[i:i+args.batchsize], y[i:i+args.batchsize])
                 # feed_dict[learning_rate] = cur_learning_rate
                 sess.run(train_step, feed_dict=feed_dict)
-            if step % 1 == 0:
+                break # TEMP
+            if step % 1 == 0: # TEMP
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
+                break # TEMP
 
         # Test if the model improved on the validation set
         validation_loss = score_model(sess, model, dataset)
@@ -113,8 +119,8 @@ def main():
     print('Finished training. Scoring model...')
     sys.stdout.flush()
     
-    logprobs, rmse = explicit_score(sess, model, dataset)
-    np.savetxt(dargs['outfile'] + '_score.csv', [best_loss, logprobs, rmse, args.k, args.lam, args.num_components])
+    logprobs, bits_per_dim = explicit_score(sess, model, dataset)
+    np.savetxt(dargs['outfile'] + '_score.csv', [best_loss, logprobs, bits_per_dim, args.k, args.lam, args.num_components])
 
 
 
