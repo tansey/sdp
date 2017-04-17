@@ -733,11 +733,11 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
 
     @property
     def train_loss(self):
-        return self._loss_function
+        return self._train_loss
 
     @property
     def test_loss(self):
-        return self._neg_log_likelihood
+        return self._test_loss
 
 
 
