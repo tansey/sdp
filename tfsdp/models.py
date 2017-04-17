@@ -676,8 +676,6 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
                     scope=None, dense=None, **kwargs):
         if not hasattr(num_classes, "__len__"):
             num_classes = (num_classes, )
-        if not hasattr(neighbor_radius, "__len__"):
-            neighbor_radius = tuple([neighbor_radius]*len(num_classes))
 
         self._num_classes = np.array(num_classes, dtype=float)
         self._dim_models = []
