@@ -10,7 +10,8 @@ from tfsdp.utils import ints_to_multinomials
 from tfsdp.models import MultinomialLayer, \
                          DiscreteParametricMixtureLayer, \
                          LocallySmoothedMultiscaleLayer, \
-                         DiscreteLogisticMixtureLayer
+                         DiscreteLogisticMixtureLayer, \
+                         ScalableLocallySmoothedMultiscaleLayer
 
 class Model(object):
     def __init__(self, layer, x=None, density=None, labels=None,
@@ -55,7 +56,8 @@ class Model(object):
         self._train_dict[self._x] = x
         if isinstance(self.layer, MultinomialLayer):
             self._train_dict[self._labels] = ints_to_multinomials(labels, self._bins)
-        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer):
+        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer)\
+             isinstance(self.layer, ScalableLocallySmoothedMultiscaleLayer):
             self.layer.fill_train_dict(self._train_dict, labels)
         else:
             self._train_dict[self._labels] = labels
@@ -66,7 +68,8 @@ class Model(object):
         self._test_dict[self._x] = x
         if isinstance(self.layer, MultinomialLayer):
             self._test_dict[self._labels] = ints_to_multinomials(labels, self._bins)
-        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer):
+        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer) or \
+             isinstance(self.layer, ScalableLocallySmoothedMultiscaleLayer):
             self.layer.fill_test_dict(self._test_dict, labels)
         else:
             self._test_dict[self._labels] = labels
@@ -99,6 +102,8 @@ def create_model(model, dataset, inputdir='experiments/uci/data', variable_scope
             dist_model = DiscreteLogisticMixtureLayer(drop_h3, layer_sizes[-1], num_classes, one_hot=False, **kwargs)
         elif model == 'sdp':
             dist_model = LocallySmoothedMultiscaleLayer(drop_h3, layer_sizes[-1], num_classes, one_hot=False, **kwargs)
+        elif model == 'fast-sdp':
+            dist_model = ScalableLocallySmoothedMultiscaleLayer(drop_h3, layer_sizes[-1], num_classes, one_hot=False, **kwargs)
         else:
             raise Exception('Unknown model type: {0}'.format(model))
 

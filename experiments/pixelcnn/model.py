@@ -67,7 +67,8 @@ class Model(object):
         self._test_dict[self._x] = x
         if isinstance(self.layer, MultinomialLayer):
             self._test_dict[self._labels] = ints_to_multinomials(labels, self._bins)
-        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer):
+        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer)\
+             isinstance(self.layer, ScalableLocallySmoothedMultiscaleLayer):
             self.layer.fill_test_dict(self._test_dict, labels)
         else:
             self._test_dict[self._labels] = labels

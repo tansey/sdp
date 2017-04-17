@@ -32,7 +32,7 @@ def main():
     parser = argparse.ArgumentParser(description='Discrete conditional distribution estimation on UCI data.')
 
     # Experiment settings
-    parser.add_argument('model', choices=['multinomial', 'gmm', 'lmm', 'sdp'], help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed k-d trees.')
+    parser.add_argument('model', choices=['multinomial', 'gmm', 'lmm', 'sdp', 'fast-sdp'], help='The model type. gmm is mixture density networks. lmm is logistic mixture model. sdp is smoothed k-d trees.')
     parser.add_argument('dataset', choices=['auto_mpg', 'housing', 'energy_efficiency', 'parkinsons', 'concrete', 'abalone', 'student_performance'], help='The dataset to use. See the corresponding preprocessing files for details.')
     parser.add_argument('--inputdir', default='experiments/uci/data', help='The directory where the input data files will be stored.')
     parser.add_argument('--outputdir', default='experiments/uci/results', help='The directory where the output data files will be stored.')
@@ -65,7 +65,7 @@ def main():
     # Get the parameters
     if not os.path.exists(dargs['outputdir']):
         os.makedirs(dargs['outputdir'])
-    if args.model == 'sdp':
+    if args.model in ('sdp', 'fast-sdp'):
         dargs['outfile'] = os.path.join(dargs['outputdir'], '{model}_{dataset}_{k}_{lam}_{train_id}'.format(**dargs))
         dargs['variable_scope'] = '{model}-{dataset}-{k}-{lam}-{train_id}'.format(**dargs)
     elif args.model in ('gmm', 'lmm'):
