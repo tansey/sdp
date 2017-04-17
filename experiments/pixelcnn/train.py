@@ -100,8 +100,9 @@ def main():
         # Do all the minibatch updates for this epoch
         for step, (X, y) in enumerate(dataset.train):
             for i in xrange(int(np.ceil(len(X) / float(args.batchsize)))):
-                feed_dict = model.train_dict(X[i:i+args.batchsize], y[i:i+args.batchsize])
-                # feed_dict[learning_rate] = cur_learning_rate
+                start = i*args.batchsize
+                end = min(start + args.batchsize, len(X))
+                feed_dict = model.train_dict(X[start:end], y[start:end])
                 sess.run(train_step, feed_dict=feed_dict)
             if step % 1 == 0: # TEMP
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
