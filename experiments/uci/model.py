@@ -56,7 +56,7 @@ class Model(object):
         self._train_dict[self._x] = x
         if isinstance(self.layer, MultinomialLayer):
             self._train_dict[self._labels] = ints_to_multinomials(labels, self._bins)
-        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer)\
+        elif isinstance(self.layer, LocallySmoothedMultiscaleLayer) or \
              isinstance(self.layer, ScalableLocallySmoothedMultiscaleLayer):
             self.layer.fill_train_dict(self._train_dict, labels)
         else:
