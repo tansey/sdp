@@ -724,7 +724,8 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         if len(X.shape) == 1:
             X = np.expand_dims(X, axis=0)
         feed_dict[K.learning_phase()] = 0
-        return self.dist_helper(0, X, np.zeros((len(X), len(self._num_classes))), sess, feed_dict)
+        result = self.dist_helper(0, X, np.zeros((len(X), len(self._num_classes))), sess, feed_dict)
+        return result / result.sum(axis=np.arange(len(self._num_classes))+1, keepdims=True)
 
     def dist_helper(self, dim, X, labels, sess, feed_dict):
         dims = [len(X)] + list(self._num_classes)[dim:]
