@@ -731,7 +731,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         results = np.zeros([len(X)] + dims)
         model = self._dim_models[dim]
         for label in xrange(self._num_classes[dim]):
-            labels[dim] = label
+            labels[:,dim] = label
             feed_dict[self._labels] = labels / self._float_num_classes[np.newaxis,:]
             model.fill_test_dict(feed_dict, labels[:,dim])
             dim_density = sess.run(model.density, feed_dict)
