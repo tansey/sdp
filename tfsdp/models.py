@@ -738,7 +738,7 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
             label_prob = dim_density[:,label]
             if dim < (len(self._num_classes) - 1):
                 next_density = self.dist_helper(dim+1, X, labels, sess, feed_dict)
-                print dim, label, dim_density.shape, np.expand_dims(next_density, axis=1).shape
+                # print dim, label, dim_density.shape, np.expand_dims(next_density, axis=1).shape
                 results[:,label] = label_prob * np.expand_dims(next_density, axis=1)
             else:
                 results[:,label] = label_prob
