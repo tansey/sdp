@@ -682,20 +682,18 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         self._dim_models = []
         train_losses = []
         test_losses = []
-        self._labels = tf.placeholder(tf.float32, [None, len(num_classes)])
+        self._labels = tf.placeholder(tf.int32, [None, len(num_classes)])
         for dim, dimsize in enumerate(num_classes):
             dim_layer = input_layer
             dim_layer_size = input_layer_size
             if dim > 0:
                 if self._one_hot_dims:
                     # Use a one-hot encoding for the previous dims
-                    for i,c in enumerate(self._num_classes[:dim]):
-                        print i, c, type(i), type(c)
                     prev_dims_layer = tf.concat([tf.one_hot(self._labels[:,i], c) for i, c in enumerate(self._num_classes[:dim])], axis=1)
                     prev_dims_layer_size = np.prod(self._num_classes[:dim])
                 else:
                     # Use a real-valued scalar [-1,1] encoding for the previous dims
-                    prev_dims_layer = self._labels[:,:dim] / np.array(num_classes, dtype=float)[:dim][np.newaxis, :] * 2 - 1
+                    prev_dims_layer = tf.to_float(self._labels[:,:dim]) / np.array(num_classes, dtype=float)[:dim][np.newaxis, :] * 2 - 1
                     prev_dims_layer_size = dim
 
                 if dense is not None:
