@@ -83,17 +83,18 @@ class Model(object):
 def create_model(model, dataset, inputdir=None, variable_scope='pixelcnnpp-', **kwargs):
     with tf.variable_scope(variable_scope):
         X = tf.placeholder(tf.float32, [None, dataset.nfeatures], name='X')
-
+        
         input_layer = X
         input_layer_size = dataset.nfeatures
-        # Add some optional dense layers to better learn the mapping from features to classes
-        # if dense is not None:
-        #     for d in dense:
-        #         print 'Dense: {0}'.format(d)
-        #         input_layer = Dense(d, W_regularizer=l2(0.01), activation=K.relu)(input_layer)
-        #         input_layer = Dropout(0.5)(input_layer)
-        #         input_layer_size = d
 
+        # Add some non-linearities
+        input_layer = Dense(128, W_regularizer=l2(0.01), activation=K.relu)(input_layer)
+        input_layer = Dropout(0.5)(input_layer)
+        input_layer_size = 128
+        input_layer = Dense(64, W_regularizer=l2(0.01), activation=K.relu)(input_layer)
+        input_layer = Dropout(0.5)(input_layer)
+        input_layer_size = 64
+        
         if model == 'multinomial':
             dist_model = MultinomialLayer(input_layer, input_layer_size, dataset.nlabels, **kwargs)
         elif model == 'gmm':
