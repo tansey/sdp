@@ -689,7 +689,10 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
             if dim > 0:
                 if self._one_hot_dims:
                     # Use a one-hot encoding for the previous dims
-                    print tf.one_hot(self._labels[:,0], self._num_classes[0])
+                    print 'Adding the following'
+                    for i,c in enumerate(self._num_classes[:dim]):
+                        print tf.one_hot(self._labels[:,i], c)
+                    print 'done'
                     prev_dims_layer = tf.concat([tf.one_hot(self._labels[:,i], c) for i, c in enumerate(self._num_classes[:dim])], axis=1)
                     prev_dims_layer_size = np.prod(self._num_classes[:dim])
                 else:
