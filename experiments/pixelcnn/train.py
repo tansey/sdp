@@ -18,7 +18,7 @@ def score_model(sess, model, dataset):
         feed_dict = model.test_dict(X, y)
         loss += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape[0]
-        print nexamples, X.shape[0], loss
+        print step, nexamples, X.shape[0], loss
         break # TEMP
     bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
@@ -26,14 +26,15 @@ def score_model(sess, model, dataset):
 
 def explicit_score(sess, model, dataset):
     neg_logprobs = 0
-    squared_err = 0
-    indices = np.array(list(np.ndindex(model.layer._num_classes)))
+    # squared_err = 0
+    # indices = np.array(list(np.ndindex(model.layer._num_classes)))
     nexamples = 0
-    binsize = (255.**3 / float(np.prod(dataset.nlabels)))
-    for X, y in dataset.test:
+    # binsize = (255.**3 / float(np.prod(dataset.nlabels)))
+    for step, (X, y) in enumerate(dataset.test):
         feed_dict = model.test_dict(X, y)
         neg_logprobs += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape
+        print step, nexamples, X.shape[0], neg_logprobs
         # for i in xrange(len(X)):
         #     feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
         #     # if model.density:
