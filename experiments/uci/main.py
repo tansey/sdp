@@ -67,6 +67,7 @@ def main():
 
     # Fast SDP settings
     parser.add_argument('--dense', nargs='+', type=int, help='The optional dense layers to add for the fast-sdp model.')
+    parser.add_argument('--one_hot_dims', type=int, default=0, help='The use a one-hot encoding for the previous dimensions in the fast-sdp sub-models.')
 
     # Get the arguments from the command line
     args = parser.parse_args()
