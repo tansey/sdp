@@ -139,8 +139,7 @@ def main():
         print('Validating...')
         sys.stdout.flush()
         validation_loss = score_model(sess, model, dataset)
-        break # TEMP
-
+        
         # Check if we are improving
         if best_loss is None or validation_loss < best_loss:
             best_loss = validation_loss
@@ -152,6 +151,7 @@ def main():
             epochs_since_improvement += 1
 
         print('Epoch #{0} Validation loss: {1} Epochs since improvement: {2}'.format(epoch, validation_loss, epochs_since_improvement))
+        break # TEMP
 
     # Reset the model back to the best version
     saver.restore(sess, dargs['outfile'])
@@ -161,6 +161,7 @@ def main():
     sys.stdout.flush()
     
     logprobs, bits_per_dim = explicit_score(sess, model, dataset)
+    print [best_loss, logprobs, bits_per_dim, args.k, args.lam, args.num_components]
     np.savetxt(dargs['outfile'] + '_score.csv', [best_loss, logprobs, bits_per_dim, args.k, args.lam, args.num_components])
 
 
