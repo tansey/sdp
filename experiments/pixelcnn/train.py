@@ -148,7 +148,7 @@ def main():
                 cur_learning_rate *= args.learning_decay
                 cur_learning_rate = max(cur_learning_rate, args.min_learning_rate)
             if step % 100 == 0:
-                print('\tEpoch {0}, step {1}'.format(epoch, step))
+                print('\tEpoch {}, step {}, learning rate {}'.format(epoch, step, cur_learning_rate))
                 sys.stdout.flush()
 
         # Test if the model improved on the validation set
