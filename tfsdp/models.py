@@ -691,9 +691,11 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
                 dim_layer_size += dim
             if dense is not None:
                 for d in dense:
+                    print 'Adding dense', d
                     dim_layer = Dense(d, W_regularizer=l2(0.01), activation=K.relu)(dim_layer)
                     dim_layer = Dropout(0.5)(dim_layer)
                     dim_layer_size = d
+            print 'Dim layer: ', dim_layer
             dim_model = LocallySmoothedMultiscaleLayer(dim_layer, dim_layer_size, dimsize, scope=scope, **kwargs)
             train_losses.append(dim_model.train_loss)
             test_losses.append(dim_model.test_loss)
@@ -708,7 +710,6 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
         if len(labels.shape) == 1:
             labels = labels[:,np.newaxis]
         feed_dict[self._labels] = labels / self._float_num_classes[np.newaxis,:] * 2 - 1
-        print feed_dict[self._labels]
         for dim,model in enumerate(self._dim_models):
             model.fill_train_dict(feed_dict, labels[:,dim])
         feed_dict[K.learning_phase()] = 1
