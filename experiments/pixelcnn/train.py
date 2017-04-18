@@ -109,7 +109,7 @@ def main():
     model = create_model(**dargs)
     saver = tf.train.Saver()
 
-    learning_rate = 1e-4
+    learning_rate = 1e-3
     epsilon = 1e-1
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=epsilon)
     train_step = opt.minimize(model.train_loss)
