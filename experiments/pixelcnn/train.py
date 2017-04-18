@@ -43,25 +43,6 @@ def explicit_score(sess, model, dataset):
     print 'Explicit logprobs: {} Bits/dim: {}'.format(logprobs, bits_per_dim)
     return logprobs, bits_per_dim
 
-def explicit_score(sess, model, dataset):
-    logprobs = 0
-    squared_err = 0
-    indices = np.array(list(np.ndindex(model.layer._num_classes)))
-    for i in xrange(len(dataset.test.features)):
-        feed_dict = model.test_dict(dataset.test.features[i:i+1], dataset.test.labels[i:i+1])
-        if model.density:
-            density = sess.run(model.density, feed_dict=feed_dict)[0]
-        else:
-            density = model.layer.dist(dataset.test.features[i:i+1], sess, feed_dict)[0]
-        if np.abs(density.sum() - 1.) > 1e-10:
-            raise Exception('Distribution does not add up: {}'.format(density.sum()))
-        if density.min() < 0 or density.max() > 1:
-            raise Exception('Distribution outside acceptable bounds: [{}, {}]'.format(density.min(), density.max()))
-        logprobs += np.log(density[tuple(dataset.test.labels[i])])
-    rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
-    print 'Explicit logprobs: {0} RMSE: {1}'.format(logprobs, rmse)
-    return logprobs, rmse
-
 def main():
     parser = argparse.ArgumentParser(description='Trains an SDP model on preprocessed PixelCNN++ features.')
 
