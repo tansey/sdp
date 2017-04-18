@@ -28,14 +28,15 @@ def explicit_score(sess, model, dataset):
     for X, y in dataset.test:
         for i in xrange(len(X)):
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
-            if model.density:
-                density = sess.run(model.density, feed_dict=feed_dict)[0]
-            else:
-                density = model.layer.dist(dataset.test.features[i:i+1], sess, feed_dict)[0]
-            # density = sess.run(model.density, feed_dict=feed_dict)[0]
-            logprobs += np.log(density[tuple(y[i])] / binsize)
-            # logprobs -= sess.run(model.test_loss, feed_dict=feed_dict)
+            # if model.density:
+            #     density = sess.run(model.density, feed_dict=feed_dict)[0]
+            # else:
+            #     density = model.layer.dist(dataset.test.features[i:i+1], sess, feed_dict)[0]
+            # logprobs += np.log(density[tuple(y[i])] / binsize)
+            logprobs += sess.run(model.test_loss, feed_dict=feed_dict)
             nexamples += 1.
+            if nexamples % 1000 == 0:
+                print nexamples
             # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
             # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
     # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
