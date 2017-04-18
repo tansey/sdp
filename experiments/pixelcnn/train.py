@@ -118,11 +118,13 @@ def main():
     for epoch in xrange(args.nepochs):
         # Do all the minibatch updates for this epoch
         for step, (X, y) in enumerate(dataset.train):
-            for i in xrange(int(np.ceil(len(X) / float(args.batchsize)))):
-                start = i*args.batchsize
-                end = min(start + args.batchsize, len(X))
-                feed_dict = model.train_dict(X[start:end], y[start:end])
-                sess.run(train_step, feed_dict=feed_dict)
+            # for i in xrange(int(np.ceil(len(X) / float(args.batchsize)))):
+            #     start = i*args.batchsize
+            #     end = min(start + args.batchsize, len(X))
+            #     feed_dict = model.train_dict(X[start:end], y[start:end])
+            #     sess.run(train_step, feed_dict=feed_dict)
+            feed_dict = model.train_dict(X, y)
+            sess.run(train_step, feed_dict=feed_dict)
             if step % 100 == 0:
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
