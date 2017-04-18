@@ -65,6 +65,9 @@ def main():
     # GMM/LMM settings
     parser.add_argument('--num_components', type=int, default=5, help='The number of mixture components for gmm or lmm models.')
 
+    # Fast SDP settings
+    parser.add_argument('--dense', nargs='+', type=int, help='The optional dense layers to add for the fast-sdp model.')
+
     # Get the arguments from the command line
     args = parser.parse_args()
     dargs = vars(args)
