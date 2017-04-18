@@ -19,19 +19,20 @@ def score_model(sess, model, dataset):
         loss += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape[0]
         print nexamples, X.shape[0], loss
+        break # TEMP
     bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
     return loss
 
 def explicit_score(sess, model, dataset):
-    logprobs = 0
+    neg_logprobs = 0
     squared_err = 0
     indices = np.array(list(np.ndindex(model.layer._num_classes)))
     nexamples = 0
     binsize = (255.**3 / float(np.prod(dataset.nlabels)))
     for X, y in dataset.test:
         feed_dict = model.test_dict(X, y)
-        logprobs += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
+        neg_logprobs += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape
         # for i in xrange(len(X)):
         #     feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
@@ -46,7 +47,7 @@ def explicit_score(sess, model, dataset):
         #     # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
         #     # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
     # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
-    bits_per_dim = -logprobs / (np.log(2.) * 3. * nexamples)
+    bits_per_dim = neg_logprobs / (np.log(2.) * 3. * nexamples)
     print 'Explicit logprobs: {} Bits/dim: {}'.format(logprobs, bits_per_dim)
     return logprobs, bits_per_dim
 
@@ -135,6 +136,7 @@ def main():
         print('Validating...')
         sys.stdout.flush()
         validation_loss = score_model(sess, model, dataset)
+        break # TEMP
 
         # Check if we are improving
         if best_loss is None or validation_loss < best_loss:
