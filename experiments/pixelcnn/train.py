@@ -35,7 +35,7 @@ def explicit_score(sess, model, dataset):
             # logprobs += np.log(density[tuple(y[i])] / binsize)
             logprobs += sess.run(model.test_loss, feed_dict=feed_dict)
             nexamples += 1.
-            if nexamples % 1000 == 0:
+            if int(nexamples) % 1000 == 0:
                 print nexamples
             # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
             # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
