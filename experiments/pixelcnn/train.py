@@ -144,12 +144,12 @@ def main():
             feed_dict = model.train_dict(X, y)
             feed_dict[learning_rate] = cur_learning_rate
             sess.run(train_step, feed_dict=feed_dict)
-            if cur_learning_rate > args.min_learning_rate:
-                cur_learning_rate *= args.learning_decay
-                cur_learning_rate = max(cur_learning_rate, args.min_learning_rate)
             if step % 100 == 0:
                 print('\tEpoch {}, step {}, learning rate {}'.format(epoch, step, cur_learning_rate))
                 sys.stdout.flush()
+            if cur_learning_rate > args.min_learning_rate:
+                cur_learning_rate *= args.learning_decay
+                cur_learning_rate = max(cur_learning_rate, args.min_learning_rate)
 
         # Test if the model improved on the validation set
         print('Validating...')
