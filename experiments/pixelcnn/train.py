@@ -135,6 +135,7 @@ def main():
                 end = min(start + args.batchsize, len(X))
                 feed_dict = model.train_dict(X[start:end], y[start:end])
                 sess.run(train_step, feed_dict=feed_dict)
+                break # TEMP
             if step % 100 == 0:
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
