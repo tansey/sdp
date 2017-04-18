@@ -33,7 +33,7 @@ def explicit_score(sess, model, dataset):
     for step, (X, y) in enumerate(dataset.test):
         feed_dict = model.test_dict(X, y)
         neg_logprobs += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
-        nexamples += X.shape
+        nexamples += X.shape[0]
         print step, nexamples, X.shape[0], neg_logprobs
         # for i in xrange(len(X)):
         #     feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
