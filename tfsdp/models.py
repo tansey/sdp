@@ -691,10 +691,10 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
                 prev_dims_layer_size = dim
                 if dense is not None:
                     for d in dense:
-                        print 'Adding dense', d
                         prev_dims_layer = Dense(d, W_regularizer=l2(0.01), activation=K.relu)(prev_dims_layer)
                         prev_dims_layer = Dropout(0.5)(dim_layer)
                         prev_dims_layer_size = d
+                        print 'Adding dense', d, prev_dims_layer
                 dim_layer = tf.concat([dim_layer, prev_dims_layer], axis=1)
                 dim_layer_size += prev_dims_layer_size
             print 'Dim layer: ', dim_layer
