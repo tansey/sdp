@@ -18,7 +18,7 @@ def score_model(sess, model, dataset):
         feed_dict = model.test_dict(X, y)
         loss += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape[0]
-        print step, nexamples, X.shape[0], loss
+        print step, nexamples, X.shape[0], loss, loss / (np.log(2.) * 3. * nexamples)
         break # TEMP
     bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
@@ -34,7 +34,7 @@ def explicit_score(sess, model, dataset):
         feed_dict = model.test_dict(X, y)
         neg_logprobs += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape[0]
-        print step, nexamples, X.shape[0], neg_logprobs
+        print step, nexamples, X.shape[0], neg_logprobs, neg_logprobs / (np.log(2.) * 3. * nexamples)
         if step > 10: # TEMP
             break
         # for i in xrange(len(X)):
@@ -51,8 +51,8 @@ def explicit_score(sess, model, dataset):
         #     # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
     # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
     bits_per_dim = neg_logprobs / (np.log(2.) * 3. * nexamples)
-    print 'Explicit logprobs: {} Bits/dim: {}'.format(logprobs, bits_per_dim)
-    return logprobs, bits_per_dim
+    print 'Explicit logprobs: {} Bits/dim: {}'.format(neg_logprobs, bits_per_dim)
+    return neg_logprobs, bits_per_dim
 
 def main():
     parser = argparse.ArgumentParser(description='Trains an SDP model on preprocessed PixelCNN++ features.')
