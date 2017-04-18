@@ -18,8 +18,10 @@ def score_model(sess, model, dataset):
         feed_dict = model.test_dict(X, y)
         loss += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape[0]
-        print step, nexamples, X.shape[0], loss, loss / (np.log(2.) * 3. * nexamples)
-        break # TEMP
+        if step % 100 == 0:
+            print(step, nexamples, X.shape[0], loss, loss / (np.log(2.) * 3. * nexamples))
+            sys.stdout.flush()
+
     loss /= float(nexamples)
     bits_per_dim = loss / (np.log(2.) * 3.)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
@@ -35,9 +37,9 @@ def explicit_score(sess, model, dataset):
         feed_dict = model.test_dict(X, y)
         neg_logprobs += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
         nexamples += X.shape[0]
-        print step, nexamples, X.shape[0], neg_logprobs, neg_logprobs / (np.log(2.) * 3. * nexamples)
-        if step > 10: # TEMP
-            break
+        if step % 100 == 0:
+            print(step, nexamples, X.shape[0], neg_logprobs, neg_logprobs / (np.log(2.) * 3. * nexamples))
+            sys.stdout.flush()
         # for i in xrange(len(X)):
         #     feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
         #     # if model.density:
@@ -133,9 +135,6 @@ def main():
             if step % 100 == 0:
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
-            if step == 10:# TEMP
-                print 'Breaking'
-                break # TEMP
 
         # Test if the model improved on the validation set
         print('Validating...')
@@ -153,7 +152,6 @@ def main():
             epochs_since_improvement += 1
 
         print('Epoch #{0} Validation loss: {1} Epochs since improvement: {2}'.format(epoch, validation_loss, epochs_since_improvement))
-        break # TEMP
 
     # Reset the model back to the best version
     saver.restore(sess, dargs['outfile'])
