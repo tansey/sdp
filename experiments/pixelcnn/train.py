@@ -71,6 +71,11 @@ def main():
     parser.add_argument('--batchsize', type=int, default=50, help='The mini-batch size.')
     parser.add_argument('--resolution', type=int, default=256, help='The resolution of a sub-pixel.')
     
+    # Optimizer settings
+    parser.add_argument('--epsilon', type=float, default=0.1, help='The numerical stability constant for Adam.')
+    parser.add_argument('--initial_learning_rate', type=float, default=0.001, help='The initial learning rate for the optimizer.')
+    parser.add_argument('--learning_decay', type=float, default=0.999995, help='The decay rate for the learning rate.')
+
     # SDP settings
     parser.add_argument('--lam', type=float, default=0.05, help='The lambda penalty value for the smoothed k-d tree.')
     parser.add_argument('--k', type=int, default=1, help='The order of the trend filtering penalty matrix for the smoothed k-d tree.')
@@ -78,6 +83,9 @@ def main():
 
     # GMM/LMM settings
     parser.add_argument('--num_components', type=int, default=5, help='The number of mixture components for gmm or lmm models.')
+
+    # Fast SDP settings
+    parser.add_argument('--dense', nargs='+', type=int, help='The optional dense layers to add for the fast-sdp model.')
 
     # Get the arguments from the command line
     args = parser.parse_args()
@@ -109,9 +117,9 @@ def main():
     model = create_model(**dargs)
     saver = tf.train.Saver()
 
-    learning_rate = 1e-3
-    epsilon = 1e-1
-    opt = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=epsilon)
+    cur_learning_rate = args.initial_learning_rate
+    learning_rate = tf.placeholder(tf.float32, shape=[])
+    opt = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=args.epsilon)
     train_step = opt.minimize(model.train_loss)
 
     sess.run(tf.global_variables_initializer())
@@ -131,7 +139,9 @@ def main():
             #     feed_dict = model.train_dict(X[start:end], y[start:end])
             #     sess.run(train_step, feed_dict=feed_dict)
             feed_dict = model.train_dict(X, y)
+            feed_dict[learning_rate] = cur_learning_rate
             sess.run(train_step, feed_dict=feed_dict)
+            cur_learning_rate *= args.learning_decay
             if step % 100 == 0:
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
