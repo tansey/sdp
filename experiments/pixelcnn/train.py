@@ -139,6 +139,7 @@ def main():
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
             if step == 10:# TEMP
+                print 'Breaking'
                 break # TEMP
 
         # Test if the model improved on the validation set
