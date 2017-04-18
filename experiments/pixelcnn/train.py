@@ -11,10 +11,14 @@ def score_model(sess, model, dataset):
     loss = 0
     nexamples = 0
     for step, (X, y) in enumerate(dataset.validation):
-        for i in xrange(len(X)):
-            feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
-            loss += sess.run(model.test_loss, feed_dict=feed_dict)
-            nexamples += 1
+        # for i in xrange(len(X)):
+        #     feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
+        #     loss += sess.run(model.test_loss, feed_dict=feed_dict)
+        #     nexamples += 1
+        feed_dict = model.test_dict(X, y)
+        loss += sess.run(model.test_loss, feed_dict=feed_dict) * X.shape[0]
+        nexamples += X.shape[0]
+        print nexamples
     bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
     return loss
@@ -23,18 +27,22 @@ def explicit_score(sess, model, dataset):
     logprobs = 0
     squared_err = 0
     indices = np.array(list(np.ndindex(model.layer._num_classes)))
-    nexamples = 0.
+    nexamples = 0
     binsize = (255.**3 / float(np.prod(dataset.nlabels)))
+    print 'Here'
     for X, y in dataset.test:
+        print 'Here 0'
         for i in xrange(len(X)):
+            print 'Here 1'
             feed_dict = model.test_dict(X[i:i+1], y[i:i+1])
+            print 'Here 2'
             # if model.density:
             #     density = sess.run(model.density, feed_dict=feed_dict)[0]
             # else:
             #     density = model.layer.dist(dataset.test.features[i:i+1], sess, feed_dict)[0]
             # logprobs += np.log(density[tuple(y[i])] / binsize)
             logprobs += sess.run(model.test_loss, feed_dict=feed_dict)
-            nexamples += 1.
+            nexamples += 1
             print nexamples
             # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
             # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
