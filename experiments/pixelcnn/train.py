@@ -20,7 +20,8 @@ def score_model(sess, model, dataset):
         nexamples += X.shape[0]
         print step, nexamples, X.shape[0], loss, loss / (np.log(2.) * 3. * nexamples)
         break # TEMP
-    bits_per_dim = loss / (np.log(2.) * 3. * nexamples)
+    loss /= float(nexamples)
+    bits_per_dim = loss / (np.log(2.) * 3.)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
     return loss
 
@@ -50,7 +51,8 @@ def explicit_score(sess, model, dataset):
         #     # prediction = np.array([density[tuple(idx)] * idx for idx in indices]).sum(axis=0)
         #     # squared_err += np.linalg.norm(dataset.test.labels[i] - prediction)**2
     # rmse = np.sqrt(squared_err / float(len(dataset.test.features)))
-    bits_per_dim = neg_logprobs / (np.log(2.) * 3. * nexamples)
+    neg_logprobs /= float(nexamples)
+    bits_per_dim = neg_logprobs / (np.log(2.) * 3.)
     print 'Explicit logprobs: {} Bits/dim: {}'.format(neg_logprobs, bits_per_dim)
     return neg_logprobs, bits_per_dim
 
