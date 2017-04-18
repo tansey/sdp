@@ -687,14 +687,16 @@ class ScalableLocallySmoothedMultiscaleLayer(DiscreteDistributionLayer):
             dim_layer = input_layer
             dim_layer_size = input_layer_size
             if dim > 0:
-                dim_layer = tf.concat([dim_layer, self._labels[:,:dim]], axis=1)
-                dim_layer_size += dim
-            if dense is not None:
-                for d in dense:
-                    print 'Adding dense', d
-                    dim_layer = Dense(d, W_regularizer=l2(0.01), activation=K.relu)(dim_layer)
-                    dim_layer = Dropout(0.5)(dim_layer)
-                    dim_layer_size = d
+                prev_dims_layer = self._labels[:,:dim]
+                prev_dims_layer_size = dim
+                if dense is not None:
+                    for d in dense:
+                        print 'Adding dense', d
+                        prev_dims_layer = Dense(d, W_regularizer=l2(0.01), activation=K.relu)(prev_dims_layer)
+                        prev_dims_layer = Dropout(0.5)(dim_layer)
+                        prev_dims_layer_size = d
+                dim_layer = tf.concat([dim_layer, prev_dims_layer], axis=1)
+                dim_layer_size += prev_dims_layer_size
             print 'Dim layer: ', dim_layer
             dim_model = LocallySmoothedMultiscaleLayer(dim_layer, dim_layer_size, dimsize, scope=scope, **kwargs)
             train_losses.append(dim_model.train_loss)
