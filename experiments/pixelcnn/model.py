@@ -80,7 +80,7 @@ class Model(object):
         self._test_dict[K.learning_phase()] = 0
         return self._test_dict
 
-def create_model(model, dataset, dense=None, inputdir=None, variable_scope='pixelcnnpp-', **kwargs):
+def create_model(model, dataset, inputdir=None, variable_scope='pixelcnnpp-', **kwargs):
     with tf.variable_scope(variable_scope):
         X = tf.placeholder(tf.float32, [None, dataset.nfeatures], name='X')
 
