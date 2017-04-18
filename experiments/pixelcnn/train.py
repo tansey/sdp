@@ -25,6 +25,7 @@ def score_model(sess, model, dataset):
     loss /= float(nexamples)
     bits_per_dim = loss / (np.log(2.) * 3.)
     print 'Examples {} Validation score: {} Bits/dim: {}'.format(nexamples, loss, bits_per_dim)
+    sys.stdout.flush()
     return loss
 
 def explicit_score(sess, model, dataset):
@@ -56,6 +57,7 @@ def explicit_score(sess, model, dataset):
     neg_logprobs /= float(nexamples)
     bits_per_dim = neg_logprobs / (np.log(2.) * 3.)
     print 'Explicit logprobs: {} Bits/dim: {}'.format(neg_logprobs, bits_per_dim)
+    sys.stdout.flush()
     return neg_logprobs, bits_per_dim
 
 def main():
@@ -73,8 +75,9 @@ def main():
     
     # Optimizer settings
     parser.add_argument('--epsilon', type=float, default=0.1, help='The numerical stability constant for Adam.')
-    parser.add_argument('--initial_learning_rate', type=float, default=0.001, help='The initial learning rate for the optimizer.')
-    parser.add_argument('--learning_decay', type=float, default=0.999995, help='The decay rate for the learning rate.')
+    parser.add_argument('--initial_learning_rate', type=float, default=0.01, help='The initial learning rate for the optimizer.')
+    parser.add_argument('--learning_decay', type=float, default=0.9999, help='The decay rate for the learning rate.')
+    parser.add_argument('--min_learning_rate', type=float, default=1e-4, help='The minimum learning rate.')
 
     # SDP settings
     parser.add_argument('--lam', type=float, default=0.05, help='The lambda penalty value for the smoothed k-d tree.')
@@ -141,7 +144,9 @@ def main():
             feed_dict = model.train_dict(X, y)
             feed_dict[learning_rate] = cur_learning_rate
             sess.run(train_step, feed_dict=feed_dict)
-            cur_learning_rate *= args.learning_decay
+            if cur_learning_rate > args.min_learning_rate:
+                cur_learning_rate *= args.learning_decay
+                cur_learning_rate = max(cur_learning_rate, args.min_learning_rate)
             if step % 100 == 0:
                 print('\tEpoch {0}, step {1}'.format(epoch, step))
                 sys.stdout.flush()
@@ -172,6 +177,7 @@ def main():
     
     logprobs, bits_per_dim = explicit_score(sess, model, dataset)
     print [best_loss, logprobs, bits_per_dim, args.k, args.lam, args.num_components]
+    sys.stdout.flush()
     np.savetxt(dargs['outfile'] + '_score.csv', [best_loss, logprobs, bits_per_dim, args.k, args.lam, args.num_components])
 
 
