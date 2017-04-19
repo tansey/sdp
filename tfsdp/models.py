@@ -380,7 +380,7 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
             self.splits, self.masks = tf.gather(self._split_labels, split_indices), tf.gather(self._split_masks, split_indices)
 
 
-    def build(self, input_layer)
+    def build(self, input_layer):
             # q is the value of the tree nodes
             # m is the value of the multinomial bins
             # z is the log-space version of m
