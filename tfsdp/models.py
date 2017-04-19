@@ -366,6 +366,7 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
         self._dim_sizes = [2**(int(np.ceil(np.log2(c)))) for c in num_classes]
         self._num_nodes = np.prod(self._dim_sizes) - 1 # flatten the density into a 1-d grid
         self._split_labels, self._split_masks = self.multinomial_split_masks()
+        self._one_hot = one_hot
 
         with tf.variable_scope(scope or type(self).__name__):
             self.W = weight_variable([input_layer_size, self._num_nodes])
@@ -379,7 +380,7 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
             self.build(input_layer)
 
     def build(self, input_layer):
-        if one_hot:
+        if self._one_hot:
             split_indices = tf.to_int32(tf.argmax(self._labels, 1))
         else:
             split_indices = tf.to_int32(tf.reduce_sum([self._labels[:,i]*int(np.prod(self._num_classes[i+1:])) for i in xrange(len(self._num_classes))], 0))
