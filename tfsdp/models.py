@@ -373,41 +373,44 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
             self._lam = tf.Variable(np.log(lam), tf.float32, name='lam') if self._penalty == 'gamlasso' else tf.constant(lam, tf.float32, name='lam')
             if one_hot:
                 self._labels = tf.placeholder(tf.float32, shape=[None, np.prod(self._num_classes)])
-                split_indices = tf.to_int32(tf.argmax(self._labels, 1))
             else:
                 self._labels = tf.placeholder(tf.int32, shape=[None, len(self._num_classes)])
-                split_indices = tf.to_int32(tf.reduce_sum([self._labels[:,i]*int(np.prod(self._num_classes[i+1:])) for i in xrange(len(self._num_classes))], 0))
-            self.splits, self.masks = tf.gather(self._split_labels, split_indices), tf.gather(self._split_masks, split_indices)
-
+            
             self.build(input_layer)
 
     def build(self, input_layer):
-            # q is the value of the tree nodes
-            # m is the value of the multinomial bins
-            # z is the log-space version of m
-            self._q = tf.reciprocal(1 + tf.exp(-(tf.matmul(input_layer,self.W) + self.b)))
-            r = self.splits * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0))
-            s = (1 - self.splits) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0))
-            self._multiscale_loss = tf.reduce_mean(-tf.reduce_sum(self.masks * (r+s),
-                                            axis=[1]))
+        if one_hot:
+            split_indices = tf.to_int32(tf.argmax(self._labels, 1))
+        else:
+            split_indices = tf.to_int32(tf.reduce_sum([self._labels[:,i]*int(np.prod(self._num_classes[i+1:])) for i in xrange(len(self._num_classes))], 0))
+        self.splits, self.masks = tf.gather(self._split_labels, split_indices), tf.gather(self._split_masks, split_indices)
 
-            # Convert from multiscale output to multinomial output
-            L, R = self.multiscale_splits_masks()
-            q_tiles = tf.constant([1, np.prod(self._num_classes)])
+        # q is the value of the tree nodes
+        # m is the value of the multinomial bins
+        # z is the log-space version of m
+        self._q = tf.reciprocal(1 + tf.exp(-(tf.matmul(input_layer,self.W) + self.b)))
+        r = self.splits * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0))
+        s = (1 - self.splits) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0))
+        self._multiscale_loss = tf.reduce_mean(-tf.reduce_sum(self.masks * (r+s),
+                                        axis=[1]))
 
-            m = tf.map_fn(lambda q_i: self.multiscale_to_multinomial(q_i, L, R, q_tiles), self._q)
+        # Convert from multiscale output to multinomial output
+        L, R = self.multiscale_splits_masks()
+        q_tiles = tf.constant([1, np.prod(self._num_classes)])
 
-            z = tf.log(tf.clip_by_value(m, 1e-10, 1.))
+        m = tf.map_fn(lambda q_i: self.multiscale_to_multinomial(q_i, L, R, q_tiles), self._q)
 
-            # Get the trend filtering penalty
-            fv = trend_filtering_penalty(z, self._num_classes, self._k, penalty=self._penalty)
-            reg = tf.multiply(self._lam, fv)
+        z = tf.log(tf.clip_by_value(m, 1e-10, 1.))
 
-            self._loss_function = tf.add(self._multiscale_loss, reg)
+        # Get the trend filtering penalty
+        fv = trend_filtering_penalty(z, self._num_classes, self._k, penalty=self._penalty)
+        reg = tf.multiply(self._lam, fv)
 
-            # Reshape to the original dimensions of the density
-            density_shape = tf.stack([tf.shape(self._q)[0]] + list(self._num_classes))
-            self._density = tf.reshape(m, density_shape)
+        self._loss_function = tf.add(self._multiscale_loss, reg)
+
+        # Reshape to the original dimensions of the density
+        density_shape = tf.stack([tf.shape(self._q)[0]] + list(self._num_classes))
+        self._density = tf.reshape(m, density_shape)
 
     @property
     def labels(self):
