@@ -368,8 +368,8 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
         self._split_labels, self._split_masks = self.multinomial_split_masks()
 
         with tf.variable_scope(scope or type(self).__name__):
-            W = weight_variable([input_layer_size, self._num_nodes])
-            b = bias_variable([self._num_nodes])
+            self.W = weight_variable([input_layer_size, self._num_nodes])
+            self.b = bias_variable([self._num_nodes])
             self._lam = tf.Variable(np.log(lam), tf.float32, name='lam') if self._penalty == 'gamlasso' else tf.constant(lam, tf.float32, name='lam')
             if one_hot:
                 self._labels = tf.placeholder(tf.float32, shape=[None, np.prod(self._num_classes)])
@@ -377,15 +377,17 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
             else:
                 self._labels = tf.placeholder(tf.int32, shape=[None, len(self._num_classes)])
                 split_indices = tf.to_int32(tf.reduce_sum([self._labels[:,i]*int(np.prod(self._num_classes[i+1:])) for i in xrange(len(self._num_classes))], 0))
-            splits, masks = tf.gather(self._split_labels, split_indices), tf.gather(self._split_masks, split_indices)
+            self.splits, self.masks = tf.gather(self._split_labels, split_indices), tf.gather(self._split_masks, split_indices)
 
+
+    def build(self, input_layer)
             # q is the value of the tree nodes
             # m is the value of the multinomial bins
             # z is the log-space version of m
-            self._q = tf.reciprocal(1 + tf.exp(-(tf.matmul(input_layer,W) + b)))
-            r = splits * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0))
-            s = (1 - splits) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0))
-            self._multiscale_loss = tf.reduce_mean(-tf.reduce_sum(masks * (r+s),
+            self._q = tf.reciprocal(1 + tf.exp(-(tf.matmul(input_layer,self.W) + self.b)))
+            r = self.splits * tf.log(tf.clip_by_value(self._q, 1e-10, 1.0))
+            s = (1 - self.splits) * tf.log(tf.clip_by_value(1 - self._q, 1e-10, 1.0))
+            self._multiscale_loss = tf.reduce_mean(-tf.reduce_sum(self.masks * (r+s),
                                             axis=[1]))
 
             # Convert from multiscale output to multinomial output
@@ -424,7 +426,7 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
 
     @property
     def test_loss(self):
-        return self._loss_function
+        return self._multiscale_loss
 
     def multinomial_split_masks(self):
         data = np.array(list(np.ndindex(self._num_classes)))
