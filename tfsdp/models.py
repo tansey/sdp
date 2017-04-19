@@ -49,7 +49,7 @@ class DiscreteDistributionLayer(object):
         raise NotImplementedError("Abstract method")
 
 class MultinomialLayer(DiscreteDistributionLayer):
-    def __init__(self, input_layer, input_layer_size, num_classes, scope=None, **kwargs):
+    def __init__(self, input_layer, input_layer_size, num_classes, one_hot=True, scope=None, **kwargs):
         if not hasattr(num_classes, "__len__"):
             num_classes = (num_classes, )
         
@@ -57,7 +57,15 @@ class MultinomialLayer(DiscreteDistributionLayer):
         self._num_nodes = np.prod(num_classes)
 
         with tf.variable_scope(scope or type(self).__name__):
-            self._labels = tf.placeholder(tf.float32, shape=[None, self._num_nodes], name='labels')
+            if one_hot:
+                self._labels = tf.placeholder(tf.float32, shape=[None, self._num_nodes], name='labels')
+                labels = self._labels
+            else:
+                self._labels = tf.placeholder(tf.int32, shape=[None, len(num_classes)], name='labels')
+                print 'labels:'
+                print self._labels
+                labels = tf.one_hot(self._labels, self._num_nodes)
+
             W = weight_variable([input_layer_size, self._num_nodes])
             b = bias_variable([self._num_nodes])
 
@@ -68,7 +76,7 @@ class MultinomialLayer(DiscreteDistributionLayer):
             #                             axis=[1]))
             self._loss_function = tf.reduce_mean(
                                         tf.nn.softmax_cross_entropy_with_logits(
-                                            labels=self._labels,
+                                            labels=labels,
                                             logits=self._logits))
 
             # Reshape to the original dimensions of the density
