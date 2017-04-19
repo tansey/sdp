@@ -379,6 +379,7 @@ class SmoothedMultiscaleLayer(DiscreteDistributionLayer):
                 split_indices = tf.to_int32(tf.reduce_sum([self._labels[:,i]*int(np.prod(self._num_classes[i+1:])) for i in xrange(len(self._num_classes))], 0))
             self.splits, self.masks = tf.gather(self._split_labels, split_indices), tf.gather(self._split_masks, split_indices)
 
+            self.build(input_layer)
 
     def build(self, input_layer):
             # q is the value of the tree nodes
